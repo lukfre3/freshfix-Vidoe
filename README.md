@@ -16,7 +16,7 @@ npm run render:4k     # → out/FreshFix_Alumninastet2026_4K.mp4 (3840×2160)
 
 ## Musik: "So Fresh, So Clean" (instrumental)
 
-Filmen är klippt i **taktslag**: varje scen, kylskåpsbyte och textslag ligger på ett slag i musiken.
+Filmen är klippt i **taktslag**: varje scen, övergång och textslag ligger på ett slag i musiken.
 Scenplanen finns (i taktslag) i `scripts/sync_music.py`, som räknar ut `src/timeline.json`.
 Just nu är filmen synkad till 83 BPM (tempot som anges för originalinspelningen) med ett tillfälligt
 genererat musikspår.
