@@ -1,9 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame} from 'remotion';
 import {C, FONT_SANS, T, TEXT, f} from '../config';
-import {FridgeInterior} from '../components/Fridge';
-import {EASE, EASE_IN_OUT, Grain, RiseText, Vignette, lerp, ramp} from '../components/common';
-import {FixedProduct} from './S5Fridges';
+import {Bokeh, EASE, EASE_IN_OUT, Grain, ProductPhoto, RiseText, Vignette, lerp, ramp} from '../components/common';
 
 const S = T.scenes.finale;
 
@@ -17,7 +15,6 @@ export const S8Finale: React.FC = () => {
   const t4 = L(S.t4);
 
   // 1) Långsam kameraåkning in mot produkten i ett exklusivt kylskåp
-  const push = interpolate(frame, [0, logo], [1, 1.55], {extrapolateRight: 'clamp', easing: EASE_IN_OUT});
   const fridgeOut = ramp(frame, logo - 10, 14, EASE_IN_OUT);
 
   // 2) Logotyp – liten upptill under texterna, stor och centrerad i slutet
@@ -32,11 +29,9 @@ export const S8Finale: React.FC = () => {
       {/* produkt i kylskåp */}
       {fridgeOut < 1 ? (
         <AbsoluteFill style={{opacity: 1 - fridgeOut}}>
-          <AbsoluteFill style={{transform: `scale(${push})`, transformOrigin: '50% 62%'}}>
-            <FridgeInterior variant="dark" />
-            <FixedProduct dark sweepStart={20} />
-          </AbsoluteFill>
-          <Vignette strength={0.6} />
+          <ProductPhoto which="angle" dur={logo} zoom={[1.45, 2.3]} sweepStart={6} sweepDur={44} />
+          <Bokeh count={20} opacity={0.3} seed={9} />
+          <Vignette strength={0.5} />
         </AbsoluteFill>
       ) : null}
 
@@ -48,6 +43,9 @@ export const S8Finale: React.FC = () => {
         }}
       />
 
+      <AbsoluteFill style={{opacity: fridgeOut}}>
+        <Bokeh count={16} opacity={0.18} seed={4} />
+      </AbsoluteFill>
       {/* logotyp (verkliga logotypen, vit) */}
       <div
         style={{

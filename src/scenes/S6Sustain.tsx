@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Img, OffthreadVideo, Sequence, staticFile, useCurrentFrame} from 'remotion';
 import {C, FONT_SANS, FONT_SERIF, T, TEXT, f} from '../config';
-import {EASE, EASE_IN_OUT, FadeText, Grain, KenBurns, Label, RiseText, ramp} from '../components/common';
+import {EASE, EASE_IN_OUT, FadeText, Grain, GrowLine, KenBurns, Label, RiseText, ramp} from '../components/common';
 
 const S = T.scenes.sustain;
 
@@ -83,7 +83,7 @@ const Panel: React.FC<{i: number; dur: number}> = ({i, dur}) => {
         <FadeText start={0}>
           <Label color={i === 2 ? C.green : C.sand}>Hållbarhet · 0{i + 1}</Label>
         </FadeText>
-        <div style={{height: 24}} />
+        <GrowLine start={3} width={90} color={i === 2 ? C.green : C.sand} style={{margin: '16px 0 22px'}} />
         <RiseText text={TEXT.sustain[i].title} start={2} size={i === 3 || i === 4 ? 56 : 66} weight={600} align="left" color={textCol} tracking={-0.015} stagger={1} dur={12} />
         <div style={{height: 24}} />
         <FadeText start={10}>

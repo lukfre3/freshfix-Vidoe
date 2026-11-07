@@ -69,11 +69,6 @@ export const TEXT = {
     pase: { title: 'TVÅ MATERIAL.\nETT SMART FILTER.', line: '55 g aktivt kol + 15 g zeolit i en utbytbar filterpåse.' },
     montering: { title: 'ENKEL ATT ANVÄNDA.\nENKEL ATT BYTA.', line: 'Lägg i filterpåsen. Skjut ihop. Klart.' },
   },
-  fridges: {
-    labels: ['Modernt vitt', 'Exklusivt mörkt', 'Amerikanskt', 'Ljust minimalistiskt', 'Familjekylskåp', 'Rostfritt'],
-    t1: 'PASSAR I ALLA KYLSKÅP.',
-    t2: 'ETT SMARTARE SÄTT ATT TA HAND OM MATEN.',
-  },
   sustain: [
     { title: 'BYGGT FÖR ATT\nANVÄNDAS IGEN.', sub: 'Behållare i rostfritt stål – gjord för att hålla.' },
     { title: 'BYT ENDAST\nFILTERPÅSEN.', sub: 'Behållaren behålls. Bara filtret byts.' },

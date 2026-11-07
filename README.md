@@ -61,23 +61,25 @@ src/
   scenes/S2Facts.tsx      Scen 2 – Fakta (med källhänvisningar)
   scenes/S3Solution.tsx   Scen 3 – "Vi presenterar FreshFixer"
   scenes/S4How.tsx        Scen 4 – Aktivt kol, zeolit, filterpåsen, montering
-  scenes/S5Fridges.tsx    Scen 5 – Snabba kylskåpsbyten, produkten står still
-  scenes/S6Sustain.tsx    Scen 6 – Hållbarhet
-  scenes/S7Why.tsx        Scen 7 – Varför FreshFix UF?
-  scenes/S8Finale.tsx     Scen 8 – Avslut, logotyp och uppmaning
-  components/             Gemensamma delar (typografi, produkt, partiklar, kylskåp, linjegrafik)
+  scenes/S6Sustain.tsx    Scen 5 – Hållbarhet
+  scenes/S7Why.tsx        Scen 6 – Varför FreshFix UF?
+  scenes/S8Finale.tsx     Scen 7 – Avslut, logotyp och uppmaning
+  components/             Gemensamma delar (typografi, produktfoto, logotyp, partiklar, linjegrafik)
+docs/speakermanus.md      Manus + tider för svensk speakerröst
 ```
 
 ## Om produktbilderna
 
-FreshFixer visas **endast med era egna foton och klipp**. Produkten är frilagd från studiofotona (bara
-bakgrunden är borttagen, exponeringen är något upplyst). Den ritas aldrig om eller genereras av AI, så
-form, hål, slitsar och gravyr är exakt som i verkligheten. I kylskåpsscenen står samma bild på exakt samma
-pixelposition och i samma storlek i alla kylskåp. Bara bakgrunden byts.
+FreshFixer visas **endast med era egna, hela studiofoton och klipp**. Inga bilder är frilagda eller
+genererade, och kameran rör sig bara över de riktiga fotona. Därför är form, hål, slitsar och gravyr
+exakt som i verkligheten. Logotypen är er riktiga logga (`assets/source/logo.jpg`), gjord vit/transparent.
 
-Kylskåpsmiljöerna, kol- och zeolitgranulerna och linjegrafiken är skapade med kod (inte stockfilm). Vill ni
-senare byta in riktiga filmklipp (t.ex. mat som slängs eller riktiga kylskåp) kan de läggas i `public/video/`
-och användas med `<OffthreadVideo>` i respektive scen.
+Kol- och zeolitgranulerna och linjegrafiken i inledningen är skapade med kod (inte stockfilm).
+
+## Speakerröst
+
+Manus med tider finns i `docs/speakermanus.md`. Lägg inspelningen som `public/audio/voiceover.wav`
+och kör `npm run audio && npm run render`. Rösten mixas in och musiken sänks automatiskt under den.
 
 ## Källor för statistiken (visas diskret i filmen)
 

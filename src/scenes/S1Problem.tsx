@@ -2,7 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Sequence, interpolate, useCurrentFrame} from 'remotion';
 import {C, T, TEXT, f} from '../config';
 import {BinDrop, ForgottenFridge} from '../components/LineArt';
-import {EASE_IN_OUT, Grain, RiseText, Vignette, ramp} from '../components/common';
+import {Bokeh, EASE_IN_OUT, Grain, GrowLine, RiseText, Vignette, ramp} from '../components/common';
 
 const S = T.scenes.problem;
 
@@ -55,6 +55,10 @@ export const S1Problem: React.FC = () => {
           tracking={-0.03}
           color={C.beige}
         />
+      </div>
+      <Bokeh count={14} opacity={0.12} seed={2} />
+      <div style={{position: 'absolute', left: 140, top: 340}}>
+        <GrowLine start={6} width={140} color={C.sand} />
       </div>
       <Vignette strength={0.6} />
       <Grain opacity={0.08} />

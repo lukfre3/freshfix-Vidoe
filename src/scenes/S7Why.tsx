@@ -2,7 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Img, Sequence, interpolate, staticFile, useCurrentFrame} from 'remotion';
 import {C, FONT_SANS, T, TEXT, f} from '../config';
 import {BinDrop} from '../components/LineArt';
-import {EASE, Grain, Product, RiseText, Vignette, ramp} from '../components/common';
+import {Bokeh, EASE, Grain, ProductPhoto, RiseText, Vignette, ramp} from '../components/common';
 
 const S = T.scenes.why;
 
@@ -24,11 +24,12 @@ const Beat: React.FC<{i: number; dur: number}> = ({i, dur}) => {
         ) : null}
       </AbsoluteFill>
       {i === 1 ? (
-        <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', opacity: 0.55, transform: `scale(${z}) translateY(120px)`}}>
-          <Product which="front" width={980} shadow={0.6} sweepStart={4} sweepDur={40} />
+        <AbsoluteFill style={{opacity: 0.28}}>
+          <ProductPhoto which="front" dur={dur} zoom={[1.5, 1.75]} sweepStart={2} sweepDur={30} />
         </AbsoluteFill>
       ) : null}
-      <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center'}}>
+      <Bokeh count={12} opacity={0.15} seed={i + 11} />
+      <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', transform: `scale(${1.08 - 0.08 * ramp(frame, 0, 14, EASE)})`}}>
         <RiseText text={TEXT.why[i]} start={0} stagger={1} dur={12} size={i === 3 ? 130 : 104} weight={i === 3 ? 700 : 600} color={C.white} tracking={-0.03} />
       </AbsoluteFill>
       {i === 3 ? (

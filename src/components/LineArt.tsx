@@ -121,25 +121,3 @@ export const BinDrop: React.FC<{start: number; color?: string}> = ({start, color
     </svg>
   );
 };
-
-/** Logotypens isometriska kylskåp – dörren öppnas och ljus strömmar ut. */
-export const LogoFridge: React.FC<{start: number; color?: string; open: number}> = ({start, color = '#fff', open}) => {
-  // open: 0 (stängd) → 1 (öppen)
-  const s = start;
-  void open;
-  const dx = 0;
-  return (
-    <svg viewBox="200 150 360 470" style={{width: '100%', height: '100%', overflow: 'visible'}}>
-      {/* stomme (som i logotypen) */}
-      <DrawPath d="M 290 242 L 378 190 L 483 250 V 540" start={s} dur={30} color={color} />
-      {/* dörr – roterar ut i x-led */}
-      <g transform={`translate(${dx} ${-dx * 0.1})`}>
-        <DrawPath d={`M 268 255 L 405 312 V 560 L 378 582 L 268 520 Z`} start={s + 10} dur={34} color={color} />
-        <DrawPath d="M 268 388 L 405 455" start={s + 24} dur={20} color={color} />
-        <DrawPath d="M 355 406 L 368 412" start={s + 30} dur={10} color={color} />
-        <DrawPath d="M 355 463 L 368 469" start={s + 32} dur={10} color={color} />
-        <DrawPath d="M 290 242 L 385 320" start={s + 16} dur={20} color={color} />
-      </g>
-    </svg>
-  );
-};

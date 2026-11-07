@@ -29,14 +29,13 @@ MAX_SECONDS = 60.0
 # ------------------------------------------------------------------ Scenplan i taktslag
 # (ändra här om ni vill flytta tyngdpunkter – håll gärna stora "hits" på jämna 4-tal = taktens etta)
 BEATS = {
-    "problem": {"start": 0, "end": 7, "phaseB": 3.5, "text1": 0.5, "text2": 3.5},
-    "facts": {"start": 7, "end": 19, "items": [7, 11, 15]},
-    "solution": {"start": 19, "end": 32, "question": 19.25, "present": 24, "product": 28, "productClose": 30.5},
-    "how": {"start": 32, "end": 44, "kol": 32, "zeolit": 34.5, "pase": 37, "montering": 40},
-    "fridges": {"start": 44, "end": 53, "cut": 1, "cuts": 6, "text1": 45, "final": 50},
-    "sustain": {"start": 53, "end": 63, "each": 2},
-    "why": {"start": 63, "end": 69, "each": 1.5},
-    "finale": {"start": 69, "end": 83, "logo": 71, "t1": 71.5, "t2": 74, "t3": 76, "t4": 78},
+    "problem": {"start": 0, "end": 8, "phaseB": 4, "text1": 0.5, "text2": 4},
+    "facts": {"start": 8, "end": 23, "items": [8, 13, 18]},
+    "solution": {"start": 23, "end": 33, "question": 23.25, "present": 26, "product": 28, "productClose": 31},
+    "how": {"start": 33, "end": 45, "kol": 33, "zeolit": 35.5, "pase": 38, "montering": 41},
+    "sustain": {"start": 45, "end": 60, "each": 3},
+    "why": {"start": 60, "end": 68, "each": 2},
+    "finale": {"start": 68, "end": 83, "logo": 70, "t1": 70.5, "t2": 73.5, "t3": 76, "t4": 78},
 }
 TOTAL_BEATS = 83
 GROOVE_BEAT = 28  # där den "positiva" delen börjar (produkten presenteras)

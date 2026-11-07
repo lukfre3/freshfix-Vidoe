@@ -286,10 +286,8 @@ def section(t):
         return 0
     if t < SC["how"]["montering"]:
         return 1
-    if t < SC["fridges"]["start"]:
+    if t < SC["sustain"]["start"]:
         return 2
-    if SC["fridges"]["final"] <= t < SC["sustain"]["start"]:
-        return 1
     if t < SC["why"]["start"]:
         return 3
     if t < SC["finale"]["start"]:
@@ -363,12 +361,6 @@ for t in [SC["facts"]["start"], SC["solution"]["start"], SC["how"]["kol"], SC["h
     add(sfx, t - 0.45, whoosh(0.9, 0.16))
 for k in range(1, 5):
     add(sfx, SC["sustain"]["start"] + k * SC["sustain"]["each"] - 0.3, whoosh(0.6, 0.11))
-# snabba kylskåpsbyten – kort "swish" på varje klipp
-for k in range(SC["fridges"]["cuts"]):
-    add(sfx, SC["fridges"]["start"] + k * SC["fridges"]["cut"] - 0.12, whoosh(0.25, 0.08), pan=(-0.4 if k % 2 else 0.4))
-add(sfx, SC["fridges"]["start"] + 0.05, ping(1400, 0.06))
-add(sfx, SC["fridges"]["final"] + 0.1, ping(1180, 0.07))
-
 # granuler som faller – små, torra klick (aktivt kol: mörkare, zeolit: ljusare)
 for name, f_lo, f_hi, t0, t1 in (("kol", 1200, 4000, SC["how"]["kol"], SC["how"]["zeolit"]),
                                   ("zeolit", 2500, 7000, SC["how"]["zeolit"], SC["how"]["pase"]),
@@ -412,6 +404,24 @@ else:
 
 # sidechain-liknande "pump" i musiken på kickarna ger modern känsla (milt)
 mix = hp(mix, 28)
+# Speakerröst (valfri): lägg en inspelning i public/audio/voiceover.wav (se docs/speakermanus.md).
+# Musiken sänks automatiskt (ducking) där rösten hörs.
+vo_path = os.path.join(ROOT, "public", "audio", "voiceover.wav")
+if os.path.exists(vo_path):
+    import subprocess
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", vo_path, "-ac", "2", "-ar", str(SR), "-f", "f32le", "-"],
+                         check=True, capture_output=True).stdout
+    vo = np.zeros((N, 2))
+    v = np.frombuffer(raw, np.float32).reshape(-1, 2).astype(np.float64)[:N]
+    vo[: len(v)] = v
+    vo *= 0.9 / max(1e-6, np.max(np.abs(vo)))
+    lvl = np.abs(vo).mean(axis=1)
+    win = int(0.3 * SR)
+    lvl = np.convolve(lvl, np.ones(win) / win, mode="same")
+    duck = 1 - 0.55 * np.clip(lvl / (lvl.max() * 0.15 + 1e-9), 0, 1)
+    mix = mix * duck[:, None] + vo * 1.1
+    print("Speakerröst inmixad:", vo_path)
+
 # fade in/ut
 fi = int(0.8 * SR)
 mix[:fi] *= np.linspace(0, 1, fi)[:, None]

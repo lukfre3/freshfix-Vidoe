@@ -8,60 +8,52 @@
   "scenes": {
     "problem": {
       "start": 0.0,
-      "end": 5.06,
-      "phaseB": 2.53,
+      "end": 5.783,
+      "phaseB": 2.892,
       "text1": 0.361,
-      "text2": 2.53
+      "text2": 2.892
     },
     "facts": {
-      "start": 5.06,
-      "end": 13.735,
+      "start": 5.783,
+      "end": 16.627,
       "items": [
-        5.06,
-        7.952,
-        10.843
+        5.783,
+        9.398,
+        13.012
       ]
     },
     "solution": {
-      "start": 13.735,
-      "end": 23.133,
-      "question": 13.916,
-      "present": 17.349,
+      "start": 16.627,
+      "end": 23.855,
+      "question": 16.807,
+      "present": 18.795,
       "product": 20.241,
-      "productClose": 22.048
+      "productClose": 22.41
     },
     "how": {
-      "start": 23.133,
-      "end": 31.807,
-      "kol": 23.133,
-      "zeolit": 24.94,
-      "pase": 26.747,
-      "montering": 28.916
-    },
-    "fridges": {
-      "start": 31.807,
-      "end": 38.313,
-      "cut": 0.723,
-      "cuts": 6,
-      "text1": 32.53,
-      "final": 36.145
+      "start": 23.855,
+      "end": 32.53,
+      "kol": 23.855,
+      "zeolit": 25.663,
+      "pase": 27.47,
+      "montering": 29.639
     },
     "sustain": {
-      "start": 38.313,
-      "end": 45.542,
-      "each": 1.446
+      "start": 32.53,
+      "end": 43.373,
+      "each": 2.169
     },
     "why": {
-      "start": 45.542,
-      "end": 49.88,
-      "each": 1.084
+      "start": 43.373,
+      "end": 49.157,
+      "each": 1.446
     },
     "finale": {
-      "start": 49.88,
+      "start": 49.157,
       "end": 60.0,
-      "logo": 51.325,
-      "t1": 51.687,
-      "t2": 53.494,
+      "logo": 50.602,
+      "t1": 50.964,
+      "t2": 53.133,
       "t3": 54.94,
       "t4": 56.386
     }

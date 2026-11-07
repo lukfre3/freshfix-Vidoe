@@ -1,8 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Sequence, interpolate, useCurrentFrame} from 'remotion';
 import {C, FONT_SANS, FONT_SERIF, T, TEXT, f} from '../config';
-import {LogoFridge} from '../components/LineArt';
-import {EASE, EASE_IN_OUT, FadeText, Grain, KenBurns, Label, Product, RiseText, Vignette, ramp} from '../components/common';
+import {Bokeh, EASE, EASE_IN_OUT, FadeText, Grain, GrowLine, Label, LogoReveal, ProductPhoto, RiseText, ramp} from '../components/common';
 
 const S = T.scenes.solution;
 
@@ -14,32 +13,31 @@ export const S3Solution: React.FC = () => {
   const product = L(S.product);
   const close = L(S.productClose);
 
-  // mörkt → ljust: kylskåpsljuset tänds
-  const light = ramp(frame, 0, 30, EASE_IN_OUT);
-  const open = ramp(frame, 14, 40, EASE);
-  const fridgeOut = ramp(frame, present - 12, 14, EASE_IN_OUT);
-
-  // presentation
-  const presOut = ramp(frame, product - 8, 10, EASE_IN_OUT);
-  const pIn = ramp(frame, product, 30, EASE);
-  const pScale = interpolate(frame, [product, close], [0.94, 1.04]);
+  // mörkt → ljust: som när kylskåpsdörren öppnas och ljuset tänds
+  const light = ramp(frame, 0, 24, EASE_IN_OUT);
+  const glow = ramp(frame, 8, 40, EASE);
+  const qOut = ramp(frame, present - 10, 12, EASE_IN_OUT);
+  const presOut = ramp(frame, product - 6, 8, EASE_IN_OUT);
 
   return (
     <AbsoluteFill style={{background: C.beige}}>
-      {/* övergång från mörker */}
       <AbsoluteFill style={{background: C.charcoal, opacity: 1 - light}} />
       <AbsoluteFill
         style={{
-          background: `radial-gradient(circle at 70% 50%, rgba(255,250,240,${0.9 * open}) 0%, rgba(255,250,240,0) ${20 + open * 40}%)`,
-          opacity: 1 - fridgeOut,
+          background: `radial-gradient(circle at 72% 50%, rgba(255,252,245,${0.95 * glow}) 0%, rgba(255,252,245,0) ${18 + glow * 42}%)`,
+          opacity: 1 - qOut,
         }}
       />
-      {/* kylskåpet ur logotypen öppnas */}
-      <div style={{position: 'absolute', right: 180, top: 170, width: 620, height: 760, opacity: (1 - fridgeOut) * light}}>
-        <LogoFridge start={4} color={C.greenDark} open={open} />
+      {/* den riktiga logotypen ritas fram */}
+      <div style={{position: 'absolute', right: 300, top: 190, opacity: (1 - qOut) * light, transform: `scale(${interpolate(frame, [0, present], [0.97, 1.03])})`}}>
+        <LogoReveal start={6} height={680} color={C.greenDark} dur={40} />
       </div>
-      <div style={{position: 'absolute', left: 140, top: 330, opacity: 1 - fridgeOut}}>
-        <RiseText text={TEXT.solution.question} start={L(S.question)} size={78} weight={600} align="left" color={C.charcoal} tracking={-0.03} />
+      <div style={{position: 'absolute', left: 140, top: 340, opacity: 1 - qOut}}>
+        <FadeText start={L(S.question)}>
+          <Label color={C.green}>En ny idé</Label>
+        </FadeText>
+        <GrowLine start={L(S.question) + 4} width={120} color={C.green} style={{margin: '18px 0 26px'}} />
+        <RiseText text={TEXT.solution.question} start={L(S.question) + 4} size={76} weight={600} align="left" color={C.charcoal} tracking={-0.03} stagger={2} />
       </div>
 
       {/* "Vi presenterar FreshFixer." */}
@@ -51,35 +49,24 @@ export const S3Solution: React.FC = () => {
             </Label>
           </FadeText>
           <div style={{height: 20}} />
-          <RiseText text={TEXT.solution.product + '.'} start={8} size={200} weight={500} serif color={C.charcoal} tracking={-0.01} />
+          <div style={{transform: `scale(${interpolate(frame - present, [0, product - present], [0.96, 1.04])})`}}>
+            <RiseText text={TEXT.solution.product + '.'} start={4} size={210} weight={500} serif color={C.charcoal} tracking={-0.01} dur={18} />
+          </div>
         </AbsoluteFill>
       </Sequence>
 
-      {/* Produkten – hjältebild */}
-      <Sequence from={product} durationInFrames={close - product + 8}>
-        <AbsoluteFill
-          style={{
-            background: `radial-gradient(ellipse at 50% 55%, #FBF8F2 0%, ${C.beige} 45%, ${C.beigeDeep} 100%)`,
-            opacity: 1 - ramp(frame - product, close - product, 8),
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              left: '50%',
-              top: 560,
-              transform: `translate(-50%, -50%) scale(${pScale})`,
-              opacity: pIn,
-              filter: pIn < 1 ? `blur(${(1 - pIn) * 14}px)` : undefined,
-            }}
-          >
-            <Product which="angle" width={820} sweepStart={18} sweepDur={36} shadow={0.7} />
+      {/* Hjältebild: riktigt studiofoto, kameran glider in */}
+      <Sequence from={product} durationInFrames={close - product + 6}>
+        <AbsoluteFill style={{opacity: ramp(frame - product, 0, 6)}}>
+          <ProductPhoto which="angle" dur={close - product + 6} zoom={[1.55, 1.85]} pan={[2, -2]} sweepStart={8} sweepDur={40} />
+          <Bokeh count={14} opacity={0.25} seed={3} />
+          <div style={{position: 'absolute', top: 96, width: '100%', textAlign: 'center'}}>
+            <div style={{fontFamily: FONT_SERIF, fontWeight: 500, fontSize: 92, color: C.white, opacity: ramp(frame - product, 4, 16), letterSpacing: '0.01em'}}>
+              FreshFixer
+            </div>
           </div>
-          <div style={{position: 'absolute', top: 120, width: '100%', textAlign: 'center'}}>
-            <div style={{fontFamily: FONT_SERIF, fontWeight: 500, fontSize: 84, color: C.charcoal, opacity: ramp(frame - product, 8, 20)}}>FreshFixer</div>
-          </div>
-          <FadeText start={18} style={{position: 'absolute', bottom: 110, width: '100%', textAlign: 'center'}}>
-            <div style={{fontFamily: FONT_SANS, fontSize: 22, letterSpacing: '0.3em', textTransform: 'uppercase', color: C.green}}>
+          <FadeText start={14} style={{position: 'absolute', bottom: 96, width: '100%', textAlign: 'center'}}>
+            <div style={{fontFamily: FONT_SANS, fontSize: 22, letterSpacing: '0.3em', textTransform: 'uppercase', color: C.beige}}>
               {TEXT.solution.tagline}
             </div>
           </FadeText>
@@ -88,21 +75,13 @@ export const S3Solution: React.FC = () => {
 
       {/* Makrobild på det rostfria stålet */}
       <Sequence from={close} durationInFrames={total - close}>
-        <AbsoluteFill style={{opacity: ramp(frame - close, 0, 8)}}>
-          <KenBurns src="img/freshfixer_upright.jpg" dur={total - close} from={[2.2, 46, 30]} to={[2.6, 50, 36]} />
-          <AbsoluteFill
-            style={{
-              background: `linear-gradient(105deg, rgba(255,255,255,0) ${ramp(frame - close, 4, 40) * 160 - 40}%, rgba(255,255,255,0.22) ${
-                ramp(frame - close, 4, 40) * 160 - 25
-              }%, rgba(255,255,255,0) ${ramp(frame - close, 4, 40) * 160 - 10}%)`,
-              mixBlendMode: 'screen',
-            }}
-          />
-          <Vignette strength={0.5} />
+        <AbsoluteFill style={{opacity: ramp(frame - close, 0, 6)}}>
+          <ProductPhoto which="upright" dur={total - close} zoom={[2.3, 2.7]} pan={[3, -3]} rotate={[-1, 1]} sweepStart={2} sweepDur={36} />
           <div style={{position: 'absolute', left: 140, bottom: 120}}>
-            <FadeText start={8}>
+            <FadeText start={4}>
               <Label color={C.beige}>Rostfritt stål · Återanvändbar behållare</Label>
             </FadeText>
+            <GrowLine start={8} width={260} color={C.beige} style={{marginTop: 16}} />
           </div>
         </AbsoluteFill>
       </Sequence>
@@ -110,4 +89,3 @@ export const S3Solution: React.FC = () => {
     </AbsoluteFill>
   );
 };
-

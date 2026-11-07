@@ -234,65 +234,152 @@ export const Source: React.FC<{children: React.ReactNode; color?: string}> = ({c
 );
 
 // ---------------------------------------------------------------- Produkt
+/**
+ * FreshFixer visas ALLTID med era hela, oredigerade studiofoton (ingen frilagd
+ * kant). Kameran zoomar/panorerar mot produkten och ett ljussvep glider över stålet.
+ */
 export type ProductKey = 'angle' | 'front' | 'upright';
-export const PRODUCT_SRC: Record<ProductKey, {src: string; w: number; h: number}> = {
-  angle: {src: 'img/freshfixer_angle_cutout.png', w: 765, h: 522},
-  front: {src: 'img/freshfixer_front_cutout.png', w: 806, h: 362},
-  upright: {src: 'img/freshfixer_upright_cutout.png', w: 807, h: 1279},
+export const PRODUCT_PHOTO: Record<ProductKey, {src: string; cx: number; cy: number}> = {
+  angle: {src: 'img/freshfixer_angle.jpg', cx: 48.4, cy: 53.6},
+  front: {src: 'img/freshfixer_front.jpg', cx: 49.8, cy: 51.3},
+  upright: {src: 'img/freshfixer_upright.jpg', cx: 46.5, cy: 49.4},
 };
 
-/**
- * Den frilagda produktbilden – oförändrad – med kontaktskugga och ett
- * diskret ljussvep (glans) som maskas exakt mot produktens form.
- */
-export const Product: React.FC<{
+export const ProductPhoto: React.FC<{
   which?: ProductKey;
-  width: number;
-  sweepStart?: number; // frame
+  dur: number; // frames för kamerarörelsen
+  zoom?: [number, number];
+  pan?: [number, number]; // procentuell förskjutning i x (start, slut)
+  sweepStart?: number;
   sweepDur?: number;
-  shadow?: number; // 0..1
-  shadowColor?: string;
+  rotate?: [number, number];
   style?: React.CSSProperties;
-}> = ({which = 'angle', width, sweepStart, sweepDur = 40, shadow = 0.6, shadowColor = '0,0,0', style}) => {
+}> = ({which = 'angle', dur, zoom = [1.5, 1.7], pan = [0, 0], sweepStart, sweepDur = 40, rotate = [0, 0], style}) => {
   const frame = useCurrentFrame();
-  const p = PRODUCT_SRC[which];
-  const height = (width * p.h) / p.w;
-  const url = staticFile(p.src);
+  const p = PRODUCT_PHOTO[which];
+  const t = ramp(frame, 0, dur, Easing.bezier(0.33, 0, 0.2, 1));
+  const z = lerp(zoom[0], zoom[1], t);
+  const px = lerp(pan[0], pan[1], t);
+  const rot = lerp(rotate[0], rotate[1], t);
   const s = sweepStart !== undefined ? ramp(frame, sweepStart, sweepDur, EASE_IN_OUT) : -1;
   return (
-    <div style={{position: 'relative', width, height, ...style}}>
-      {/* kontaktskugga */}
-      <div
+    <AbsoluteFill style={{overflow: 'hidden', background: '#6d6e70', ...style}}>
+      <Img
+        src={staticFile(p.src)}
         style={{
-          position: 'absolute',
-          left: '6%',
-          right: '6%',
-          bottom: -height * 0.04,
-          height: height * 0.16,
-          borderRadius: '50%',
-          background: `radial-gradient(ellipse at center, rgba(${shadowColor},${0.55 * shadow}) 0%, rgba(${shadowColor},0) 70%)`,
-          filter: 'blur(6px)',
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: `${p.cx}% ${p.cy}%`,
+          transform: `translateX(${px}%) scale(${z}) rotate(${rot}deg)`,
+          transformOrigin: `${p.cx}% ${p.cy}%`,
+          filter: 'contrast(1.06) saturate(0.9)',
         }}
       />
-      <Img src={url} style={{position: 'absolute', inset: 0, width: '100%', height: '100%'}} />
       {s > 0 && s < 1 ? (
-        <div
+        <AbsoluteFill
           style={{
-            position: 'absolute',
-            inset: 0,
-            WebkitMaskImage: `url(${url})`,
-            WebkitMaskSize: '100% 100%',
-            maskImage: `url(${url})`,
-            maskSize: '100% 100%',
-            background: `linear-gradient(105deg, rgba(255,255,255,0) ${s * 160 - 40}%, rgba(255,255,255,0.38) ${
-              s * 160 - 25
-            }%, rgba(255,255,255,0) ${s * 160 - 10}%)`,
-            mixBlendMode: 'screen',
+            background: `linear-gradient(110deg, rgba(255,255,255,0) ${s * 170 - 50}%, rgba(255,255,255,0.32) ${
+              s * 170 - 35
+            }%, rgba(255,255,255,0) ${s * 170 - 20}%)`,
+            mixBlendMode: 'soft-light',
           }}
         />
       ) : null}
+      {/* mjuk studiovinjett */}
+      <AbsoluteFill style={{background: 'radial-gradient(ellipse at 50% 52%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%)'}} />
+    </AbsoluteFill>
+  );
+};
+
+/** Den riktiga logotypen (ikonen) i valfri färg, som "ritas" fram nedifrån och upp. */
+export const LogoReveal: React.FC<{start: number; color?: string; height: number; dur?: number; word?: boolean}> = ({
+  start,
+  color = '#fff',
+  height,
+  dur = 36,
+  word = false,
+}) => {
+  const frame = useCurrentFrame();
+  const t = ramp(frame, start, dur, EASE_IN_OUT);
+  const w = ramp(frame, start + dur * 0.6, 24);
+  const icon = staticFile('img/logo_icon_white.png');
+  const wordUrl = staticFile('img/logo_word_white.png');
+  const iconW = (height * 685) / 1215;
+  const mask = (url: string): React.CSSProperties => ({
+    background: color,
+    WebkitMaskImage: `url(${url})`,
+    WebkitMaskSize: '100% 100%',
+    maskImage: `url(${url})`,
+    maskSize: '100% 100%',
+  });
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+      <div
+        style={{
+          width: iconW,
+          height,
+          ...mask(icon),
+          clipPath: `inset(${(1 - t) * 100}% 0 0 0)`,
+          transform: `translateY(${(1 - t) * 20}px)`,
+        }}
+      />
+      {word ? (
+        <div style={{width: height * 0.15 * (1104 / 225), height: height * 0.15, marginTop: height * 0.08, ...mask(wordUrl), opacity: w}} />
+      ) : null}
     </div>
   );
+};
+
+/** Svävande ljuspartiklar (bokeh) – ger liv åt lugna bilder. */
+export const Bokeh: React.FC<{count?: number; color?: string; seed?: number; opacity?: number}> = ({
+  count = 18,
+  color = '255,250,240',
+  seed = 1,
+  opacity = 0.35,
+}) => {
+  const frame = useCurrentFrame();
+  const r = (i: number) => {
+    const x = Math.sin((i + seed * 100) * 12.9898) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  return (
+    <AbsoluteFill style={{pointerEvents: 'none'}}>
+      {Array.from({length: count}).map((_, i) => {
+        const size = 10 + r(i) * 60;
+        const x = r(i + 50) * 1920 + Math.sin(frame / 60 + i) * 30;
+        const y = (r(i + 90) * 1300 - frame * (0.3 + r(i + 7) * 0.8)) % 1300;
+        const yy = y < -100 ? y + 1300 : y;
+        return (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: x,
+              top: yy,
+              width: size,
+              height: size,
+              borderRadius: '50%',
+              background: `radial-gradient(circle, rgba(${color},${opacity}) 0%, rgba(${color},0) 70%)`,
+              filter: `blur(${2 + r(i + 3) * 4}px)`,
+            }}
+          />
+        );
+      })}
+    </AbsoluteFill>
+  );
+};
+
+/** Tunn linje som växer fram – används som accent under rubriker. */
+export const GrowLine: React.FC<{start: number; width: number; color?: string; style?: React.CSSProperties}> = ({
+  start,
+  width,
+  color = C.sand,
+  style,
+}) => {
+  const frame = useCurrentFrame();
+  const t = ramp(frame, start, 24);
+  return <div style={{height: 2, width: width * t, background: color, borderRadius: 1, ...style}} />;
 };
 
 export const Fill: React.FC<{color: string; children?: React.ReactNode; style?: React.CSSProperties}> = ({

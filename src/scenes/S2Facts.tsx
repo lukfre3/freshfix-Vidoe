@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Sequence, interpolate, useCurrentFrame} from 'remotion';
 import {C, FONT_SANS, FONT_SERIF, T, TEXT, f} from '../config';
-import {EASE, EASE_IN_OUT, FadeText, Grain, Label, RiseText, Source, Vignette, ramp} from '../components/common';
+import {Bokeh, EASE, EASE_IN_OUT, FadeText, Grain, Label, RiseText, Source, Vignette, ramp} from '../components/common';
 
 const S = T.scenes.facts;
 
@@ -75,7 +75,8 @@ const Fact: React.FC<{i: number; dur: number}> = ({i, dur}) => {
             lineHeight: 1,
             fontVariantNumeric: 'tabular-nums',
             opacity: ramp(frame, 2, 14),
-            transform: `translateY(${(1 - ramp(frame, 2, 26)) * 40}px)`,
+            transform: `translateY(${(1 - ramp(frame, 2, 26)) * 40}px) scale(${1.06 - 0.06 * ramp(frame, 2, 30)})`,
+            transformOrigin: '0% 100%',
             whiteSpace: 'nowrap',
           }}
         >
@@ -143,6 +144,7 @@ export const S2Facts: React.FC = () => {
           </Sequence>
         );
       })}
+      <Bokeh count={12} opacity={0.1} seed={5} />
       <Vignette strength={0.45} />
       <Grain opacity={0.07} />
     </AbsoluteFill>

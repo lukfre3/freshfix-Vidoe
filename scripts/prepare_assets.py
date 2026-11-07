@@ -106,8 +106,9 @@ def video(name, slow=2.0):
 
 
 if __name__ == "__main__":
-    for n, r in CUTOUTS.items():
-        cutout(n, r)
+    # Produktfotona används hela (ingen frilagning) – endast exponeringen lyfts något.
+    for n in CUTOUTS:
+        lift(Image.open(os.path.join(SRC, n + ".jpg")).convert("RGB")).save(os.path.join(IMG, n + ".jpg"), quality=93)
     logo()
     copy_plain()
     video("stangning_med_pase")
