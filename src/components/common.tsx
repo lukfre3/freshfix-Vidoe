@@ -215,22 +215,29 @@ export const Label: React.FC<{children: React.ReactNode; color?: string; style?:
   </div>
 );
 
-export const Source: React.FC<{children: React.ReactNode; color?: string}> = ({children, color = 'rgba(255,255,255,0.5)'}) => (
-  <div
-    style={{
-      position: 'absolute',
-      left: 120,
-      bottom: 64,
-      fontFamily: FONT_SANS,
-      fontSize: 21,
-      fontWeight: 400,
-      letterSpacing: '0.02em',
-      color,
-    }}
-  >
-    {children}
-  </div>
-);
+/** Källhänvisning som en tydlig "chip" längst ned till vänster (samma stil som kartetiketten). */
+export const Source: React.FC<{children: React.ReactNode; start?: number}> = ({children, start = 24}) => {
+  const frame = useCurrentFrame();
+  const t = ramp(frame, start, 14, EASE);
+  return (
+    <div style={{position: 'absolute', left: 120, bottom: 70, opacity: t, transform: `translateY(${(1 - t) * 20}px)`}}>
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 14,
+          padding: '14px 26px',
+          borderRadius: 40,
+          background: 'rgba(27,28,26,0.8)',
+          border: '1px solid rgba(255,255,255,0.3)',
+        }}
+      >
+        <div style={{width: 12, height: 12, borderRadius: 6, background: C.green}} />
+        <div style={{fontFamily: FONT_SANS, fontSize: 28, fontWeight: 600, color: C.white, whiteSpace: 'nowrap'}}>{children}</div>
+      </div>
+    </div>
+  );
+};
 
 // ---------------------------------------------------------------- Produkt
 /**

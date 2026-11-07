@@ -51,7 +51,7 @@ const ProductReveal: React.FC<{dur: number}> = ({dur}) => {
       {/* titel */}
       <div style={{position: 'absolute', top: 70, width: '100%', textAlign: 'center'}}>
         <div style={{fontFamily: FONT_SERIF, fontWeight: 600, fontSize: 108, color: C.white, letterSpacing: `${0.3 - titleIn * 0.3}em`, opacity: Math.min(1, titleIn * 1.3), textShadow: '0 6px 30px rgba(0,0,0,0.35)'}}>
-          FreshFixer
+          {TEXT.solution.product}
         </div>
       </div>
 

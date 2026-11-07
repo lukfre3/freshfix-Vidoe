@@ -176,9 +176,7 @@ const Fact: React.FC<{i: number; dur: number}> = ({i, dur}) => {
           <Family />
         </div>
       )}
-      <FadeText start={30}>
-        <Source>{fact.source}</Source>
-      </FadeText>
+      <Source start={30}>{fact.source}</Source>
     </AbsoluteFill>
   );
 };

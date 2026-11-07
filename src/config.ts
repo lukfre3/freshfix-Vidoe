@@ -27,44 +27,43 @@ export const FONT_SANS = '"Crimson Pro", serif';
 export const FONT_SERIF = '"Crimson Pro", serif';
 
 // Inga punkter efter rubriker (frågetecken behålls).
-const LV_FAKTA = 'Livsmedelsverket – Fakta om matsvinn (livsmedelsverket.se/matsvinn)';
 
 export const TEXT = {
   problem: {
-    t1: 'Varje år slängs\nenorma mängder mat',
-    t2: 'Ett problem som påverkar\nbåde vår miljö och\nvåra plånböcker',
+    t1: 'VARJE ÅR SLÄNGS\nENORMA MÄNGDER MAT',
+    t2: 'ETT PROBLEM SOM PÅVERKAR\nBÅDE VÅR MILJÖ OCH\nVÅRA PLÅNBÖCKER',
   },
   facts: [
     {
       index: '01',
       value: 130,
       suffix: ' kg',
-      line: 'En barnfamilj i Sverige slänger cirka 130 kg mat per år',
+      line: 'EN BARNFAMILJ I SVERIGE SLÄNGER\nCIRKA 130 KG MAT PER ÅR',
       sub: 'Två vuxna och två barn',
-      source: `Källor: ${LV_FAKTA}; Livsmedelsverket, PM 2024 – Vad kostar matsvinnet i hemmet?`,
+      source: 'Källa: Livsmedelsverket – Fakta om matsvinn',
     },
     {
       index: '02',
       value: 34,
       suffix: ' kg',
-      line: 'matsvinn per person och år',
+      line: 'MATSVINN PER PERSON OCH ÅR',
       sub: 'Varav cirka 16 kg slängs i soppåsen – resten hälls ut i vasken',
-      source: `Källor: ${LV_FAKTA}; Livsmedelsverket, Konsumentundersökning matsvinn 2024`,
+      source: 'Källa: Livsmedelsverket – Fakta om matsvinn',
     },
     {
       index: '03',
       value: 5000,
       prefixRange: '',
       suffix: '–6 000 kr',
-      line: 'per år – så mycket kostar matsvinnet\nen familj med två vuxna och två barn',
+      line: 'PER ÅR – SÅ MYCKET KOSTAR MATSVINNET\nEN FAMILJ MED TVÅ VUXNA OCH TVÅ BARN',
       sub: 'Cirka 1 330 kr per person och år',
-      source: `Källor: ${LV_FAKTA}; Livsmedelsverket, PM 2024 – Vad kostar matsvinnet i hemmet?`,
+      source: 'Källa: Livsmedelsverket – Fakta om matsvinn (PM 2024)',
     },
   ],
   solution: {
-    question: 'Men tänk om det fanns\nett enklare sätt att\nta hand om maten?',
+    question: 'MEN TÄNK OM DET FANNS\nETT ENKLARE SÄTT ATT\nTA HAND OM MATEN?',
     presentSmall: 'Vi presenterar',
-    product: 'FreshFixer',
+    product: 'FRESHFIXER',
     tagline: 'Ett fräschare kylskåp – mindre matsvinn',
     // Produktsidan efter ca 20 s: egenskaper som poppar fram runt produkten
     features: ['Rostfritt stål', 'Aktivt kol + zeolit', 'Fångar lukt och mognadsgaser', 'Utbytbar filterpåse'],
@@ -89,6 +88,6 @@ export const TEXT = {
     t2: 'VI ÄR REDO ATT TA NÄSTA STEG',
     t3: 'VILL NI VETA MER OM VÅR IDÉ\nOCH VÅR POTENTIAL?',
     t4: 'VÄLJ FRESHFIX UF TILL ALUMNINÄSTET 2026',
-    footer: 'FreshFix UF  ·  Lundellska skolan, Uppsala',
+    footer: 'FreshFix UF  ·  Lundellska skolan, Uppsala län',
   },
 };
