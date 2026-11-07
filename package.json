@@ -1,0 +1,23 @@
+{
+  "name": "freshfix-reklamfilm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FreshFix UF – reklamfilm för Alumninästet 2026 (Remotion)",
+  "scripts": {
+    "studio": "remotion studio",
+    "assets": "python3 scripts/prepare_assets.py",
+    "audio": "python3 scripts/make_audio.py",
+    "render": "remotion render FreshFix out/FreshFix_Alumninastet2026_1080p.mp4",
+    "render:4k": "remotion render FreshFix out/FreshFix_Alumninastet2026_4K.mp4 --scale=2"
+  },
+  "dependencies": {
+    "@fontsource/cormorant-garamond": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@remotion/cli": "^4.0.541",
+    "@types/react": "^18.3.31",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.541",
+    "typescript": "^5.9.3"
+  }
+}

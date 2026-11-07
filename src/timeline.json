@@ -1,0 +1,17 @@
+{
+  "_kommentar": "Alla tider i sekunder. Från 'beatStart' ligger klippen på musikens taktgrid (bpm). Ändras tider här måste ljudet genereras om: npm run audio",
+  "fps": 30,
+  "bpm": 100,
+  "beatStart": 26.5,
+  "total": 90.5,
+  "scenes": {
+    "problem":  { "start": 0,    "end": 8.5,  "phaseB": 4.2, "text1": 1.0, "text2": 4.8 },
+    "facts":    { "start": 8.5,  "end": 20.5, "items": [8.5, 12.5, 16.5] },
+    "solution": { "start": 20.5, "end": 29.5, "question": 20.9, "present": 24.3, "product": 26.5, "productClose": 28.0 },
+    "how":      { "start": 29.5, "end": 44.5, "kol": 29.5, "zeolit": 32.5, "pase": 35.5, "montering": 39.7 },
+    "fridges":  { "start": 44.5, "end": 53.5, "cut": 0.6, "cuts": 8, "text1": 45.1, "final": 49.3 },
+    "sustain":  { "start": 53.5, "end": 65.5, "each": 2.4 },
+    "why":      { "start": 65.5, "end": 72.7, "each": 1.8 },
+    "finale":   { "start": 72.7, "end": 90.5, "logo": 76.3, "t1": 76.9, "t2": 79.9, "t3": 82.3, "t4": 84.7 }
+  }
+}
