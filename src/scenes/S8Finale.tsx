@@ -69,13 +69,13 @@ export const S8Finale: React.FC = () => {
 
       {/* avslutande texter i steg */}
       <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', paddingTop: 280}}>
-        {frame < t2 ? <RiseText text={TEXT.finale.t1} start={t1} end={t2 - 12} size={64} weight={600} color={C.white} tracking={0.01} lineHeight={1.18} /> : null}
+        {frame < t2 ? <RiseText text={TEXT.finale.t1} start={t1} end={t2 - 12} size={64} weight={600} color={C.white} tracking={0.01} lineHeight={1.18} stagger={2} /> : null}
       </AbsoluteFill>
       <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', paddingTop: 280}}>
         {frame >= t2 && frame < t3 ? <RiseText text={TEXT.finale.t2} start={t2} end={t3 - 12} size={72} weight={600} color={C.white} tracking={0.01} /> : null}
       </AbsoluteFill>
       <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', paddingTop: 280}}>
-        {frame >= t3 && frame < t4 ? <RiseText text={TEXT.finale.t3} start={t3} end={t4 - 10} size={64} weight={600} color={C.beige} tracking={0.01} lineHeight={1.18} /> : null}
+        {frame >= t3 && frame < t4 ? <RiseText text={TEXT.finale.t3} start={t3} end={t4 - 10} size={64} weight={600} color={C.beige} tracking={0.01} lineHeight={1.18} stagger={2} /> : null}
       </AbsoluteFill>
       <div style={{position: 'absolute', top: 760, width: '100%'}}>
         {frame >= t4 ? <RiseText text={TEXT.finale.t4} start={t4 + 14} size={58} weight={700} color={C.white} tracking={0.02} stagger={3} /> : null}

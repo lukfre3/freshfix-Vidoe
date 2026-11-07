@@ -29,12 +29,12 @@ const Beat: React.FC<{i: number; dur: number}> = ({i, dur}) => {
         </AbsoluteFill>
       ) : null}
       <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center'}}>
-        <RiseText text={TEXT.why[i]} start={0} size={i === 3 ? 130 : 104} weight={i === 3 ? 700 : 600} color={C.white} tracking={-0.03} stagger={3} />
+        <RiseText text={TEXT.why[i]} start={0} stagger={1} dur={12} size={i === 3 ? 130 : 104} weight={i === 3 ? 700 : 600} color={C.white} tracking={-0.03} />
       </AbsoluteFill>
       {i === 3 ? (
         <div style={{position: 'absolute', bottom: 120, width: '100%', display: 'flex', justifyContent: 'center', gap: 14, flexWrap: 'wrap'}}>
           {TEXT.whyPillars.map((p, k) => {
-            const t = ramp(frame, 8 + k * 3, 14, EASE);
+            const t = ramp(frame, 3 + k * 2, 10, EASE);
             return (
               <div
                 key={p}

@@ -1,6 +1,6 @@
 # FreshFix UF – reklamfilm för Alumninästet 2026
 
-Färdig film: **`out/FreshFix_Alumninastet2026_1080p.mp4`** (16:9, 1920×1080, 30 fps, H.264 + AAC, ca 90 s).
+Färdig film: **`out/FreshFix_Alumninastet2026_1080p.mp4`** (16:9, 1920×1080, 30 fps, H.264 + AAC, exakt 60 s).
 
 Filmen byggs med [Remotion](https://www.remotion.dev) (React → video). Alla texter, färger och tider ligger i
 två filer, så ni kan ändra filmen utan att röra animationerna.
@@ -14,12 +14,29 @@ npm run render        # → out/FreshFix_Alumninastet2026_1080p.mp4
 npm run render:4k     # → out/FreshFix_Alumninastet2026_4K.mp4 (3840×2160)
 ```
 
-Ändrar ni tider i `src/timeline.json` – generera om ljudet så att musiken följer klippen:
+## Musik: "So Fresh, So Clean" (instrumental)
+
+Filmen är klippt i **taktslag**: varje scen, kylskåpsbyte och textslag ligger på ett slag i musiken.
+Scenplanen finns (i taktslag) i `scripts/sync_music.py`, som räknar ut `src/timeline.json`.
+Just nu är filmen synkad till 83 BPM (tempot som anges för originalinspelningen) med ett tillfälligt
+genererat musikspår.
+
+Så lägger ni in låten:
 
 ```bash
 pip install numpy scipy pillow opencv-python-headless
-npm run audio         # → public/audio/soundtrack.wav
+# 1. Lägg instrumentalfilen i assets/source/, t.ex. assets/source/so_fresh_so_clean_instrumental.mp3
+# 2. Mät tempo + första slag och synka alla klipp mot låten:
+npm run sync -- assets/source/so_fresh_so_clean_instrumental.mp3
+#    (blir mätningen fel: lägg till --bpm 83 och/eller --start <sekund i låten där filmen ska börja>,
+#     eller --skip-bars 4 för att hoppa över låtens intro)
+# 3. Mixa låten med ljudeffekterna och rendera:
+npm run audio && npm run render
 ```
+
+Filmen blir aldrig längre än 60 sekunder (vid snabbare tempo blir den något kortare).
+Obs! Låten är upphovsrättsskyddad (OutKast). Det går bra att använda den i en ansökan som bara juryn ser,
+men om filmen publiceras offentligt kan ljudet blockeras.
 
 Byter ni ut originalbilder eller -klipp i `assets/source/`: kör `npm run assets` (kräver även ffmpeg).
 
@@ -34,10 +51,11 @@ public/                   Bearbetat material som filmen använder
   fonts/                  Inter + Cormorant Garamond (fria typsnitt, OFL)
 scripts/
   prepare_assets.py       Frilägger produkten, gör logotypen vit/transparent, konverterar klippen
-  make_audio.py           Komponerar musiken och ljudeffekterna efter timeline.json
+  sync_music.py           ★ Scenplan i taktslag + tempomätning av er låt → timeline.json
+  make_audio.py           Mixar låten (eller reservmusik) med ljudeffekterna efter timeline.json
 src/
   config.ts               ★ ALLA TEXTER OCH FÄRGER
-  timeline.json           ★ ALLA TIDER (sekunder) – musiken följer dessa
+  timeline.json           Tider i sekunder – GENERERAS av scripts/sync_music.py (scenplan i taktslag)
   FreshFixFilm.tsx        Lägger scenerna i följd + ljudspåret
   scenes/S1Problem.tsx    Scen 1 – Problemet: matsvinnet
   scenes/S2Facts.tsx      Scen 2 – Fakta (med källhänvisningar)
@@ -80,12 +98,10 @@ Länkar:
 - https://www.livsmedelsverket.se/globalassets/publikationsdatabas/rapporter/2023/l-2023-nr-03-matsvinn-i-hemmet-2022.pdf
 - https://www.naturvardsverket.se/data-och-statistik/avfall/avfall-mat/
 
-## Musik
+## Reservmusik
 
-Musiken är originalkomponerad med kod i `scripts/make_audio.py`, så det finns inga licensproblem. Den går från
-en mörk inledning i A-moll till en positiv puls i C-dur (100 BPM) när FreshFixer presenteras, och klippen
-(t.ex. kylskåpsbytena) ligger på takten. Vill ni hellre använda licensierad musik ersätter ni
-`public/audio/soundtrack.wav` med en fil på ca 90 sekunder.
+Om ingen låt anges genererar `scripts/make_audio.py` ett eget, licensfritt spår i samma tempo: en mörk
+inledning som övergår i en positiv puls när FreshFixer presenteras.
 
 ## Globala målen
 

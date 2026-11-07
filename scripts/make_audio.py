@@ -10,6 +10,7 @@ Vill ni byta till licensierad musik: ersätt public/audio/soundtrack.wav
 (eller lägg musiken i en egen <Audio> i src/FreshFixFilm.tsx).
 
 Kör: python3 scripts/make_audio.py   (kräver numpy + scipy)
+Om src/timeline.json har "music" (sätts av scripts/sync_music.py) används den låten i stället.
 """
 import json
 import os
@@ -233,7 +234,7 @@ for i, (t0, t1, ch) in enumerate(intro_chords):
     add(music, t0, pad(ch, t1 - t0 + 0.4, cutoff=cutoff, gain=0.16, attack=1.6 if i == 0 else 0.8, release=1.6))
 
 # låg drone under problemet
-dr = sum(np.sin(2 * np.pi * note_hz(33) * k * np.arange(int(21 * SR)) / SR) / k for k in (1, 2, 3))
+dr = sum(np.sin(2 * np.pi * note_hz(33) * k * np.arange(int((B0 - 4) * SR)) / SR) / k for k in (1, 2, 3))
 dr *= env(len(dr), 3.0, 1, 0.9, 3.0)
 add(music, 0.0, lp(dr, 300), 0.10)
 
@@ -255,8 +256,8 @@ for t0 in SC["facts"]["items"]:
     add(music, t0, sub_boom(0.55))
 # räkneverk som tickar när siffrorna räknas upp
 for t0 in SC["facts"]["items"]:
-    for k in range(14):
-        add(sfx, t0 + 0.2 + k * 0.095 * (1 + k * 0.05), tick(0.03, 2600 + k * 60), pan=0.2)
+    for k in range(12):
+        add(sfx, t0 + 0.15 + k * 0.08 * (1 + k * 0.05), tick(0.03, 2600 + k * 60), pan=0.2)
 
 # riser + hit när FreshFixer presenteras
 pres, prod = SC["solution"]["present"], SC["solution"]["product"]
@@ -389,10 +390,25 @@ add(sfx, mt + 2.35, tick(0.08, 1800))
 # ======================================================================
 # Mix + master
 # ======================================================================
-music = reverb(music, 3.2, 0.35)
 sfx = reverb(sfx, 1.8, 0.25)
-drums = reverb(drums, 1.2, 0.12)
-mix = music * 1.0 + drums * 0.8 + sfx * 0.9
+song = TL.get("music")
+if song:
+    # Er egen låt (t.ex. instrumental) – ersätter den genererade musiken. Ljudeffekterna ligger kvar.
+    import subprocess
+    raw = subprocess.run(
+        ["ffmpeg", "-v", "error", "-ss", str(song["start"]), "-i", os.path.join(ROOT, song["file"]),
+         "-t", str(TOTAL), "-ac", "2", "-ar", str(SR), "-f", "f32le", "-"],
+        check=True, capture_output=True,
+    ).stdout
+    track = np.frombuffer(raw, np.float32).reshape(-1, 2).astype(np.float64)
+    music = np.zeros((N, 2))
+    music[: len(track)] = track[:N]
+    music *= 0.8 / max(1e-6, np.max(np.abs(music)))
+    mix = music + sfx * 0.6
+else:
+    music = reverb(music, 3.2, 0.35)
+    drums = reverb(drums, 1.2, 0.12)
+    mix = music * 1.0 + drums * 0.8 + sfx * 0.9
 
 # sidechain-liknande "pump" i musiken på kickarna ger modern känsla (milt)
 mix = hp(mix, 28)

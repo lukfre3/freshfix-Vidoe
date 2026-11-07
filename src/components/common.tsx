@@ -104,6 +104,7 @@ type RiseProps = {
   stagger?: number; // frames mellan ord
   style?: React.CSSProperties;
   upper?: boolean;
+  dur?: number; // frames per ord-animation
 };
 
 /** Ord som glider upp ur en mask med mjuk oskärpa – premium-reklamkänsla. */
@@ -121,6 +122,7 @@ export const RiseText: React.FC<RiseProps> = ({
   align = 'center',
   stagger = 3,
   style,
+  dur = 22,
 }) => {
   const frame = useCurrentFrame();
   const lines = text.split('\n');
@@ -146,7 +148,7 @@ export const RiseText: React.FC<RiseProps> = ({
       {lines.map((line, li) => (
         <div key={li} style={{whiteSpace: 'nowrap'}}>
           {line.split(' ').map((w, i) => {
-            const t = ramp(frame, start + wi++ * stagger, 22);
+            const t = ramp(frame, start + wi++ * stagger, dur);
             return (
               <span
                 key={i}

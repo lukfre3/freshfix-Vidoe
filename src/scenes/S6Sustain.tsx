@@ -60,7 +60,7 @@ const Visual: React.FC<{i: number; dur: number}> = ({i, dur}) => {
 const Panel: React.FC<{i: number; dur: number}> = ({i, dur}) => {
   const frame = useCurrentFrame();
   const left = i % 2 === 0; // bild till vänster eller höger
-  const wipe = ramp(frame, 0, 16, EASE_IN_OUT);
+  const wipe = ramp(frame, 0, 9, EASE_IN_OUT);
   const textBg = i === 4 ? C.greenDark : i === 2 ? C.beige : C.charcoal;
   const textCol = i === 2 ? C.charcoal : C.white;
   const subCol = i === 2 ? C.green : 'rgba(238,231,219,0.7)';
@@ -80,13 +80,13 @@ const Panel: React.FC<{i: number; dur: number}> = ({i, dur}) => {
         <Visual i={i} dur={dur} />
       </div>
       <div style={{position: 'absolute', top: 0, bottom: 0, left: left ? 960 : 0, width: 960, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 110}}>
-        <FadeText start={4}>
+        <FadeText start={0}>
           <Label color={i === 2 ? C.green : C.sand}>Hållbarhet · 0{i + 1}</Label>
         </FadeText>
         <div style={{height: 24}} />
-        <RiseText text={TEXT.sustain[i].title} start={6} size={i === 3 || i === 4 ? 56 : 66} weight={600} align="left" color={textCol} tracking={-0.015} stagger={2} />
+        <RiseText text={TEXT.sustain[i].title} start={2} size={i === 3 || i === 4 ? 56 : 66} weight={600} align="left" color={textCol} tracking={-0.015} stagger={1} dur={12} />
         <div style={{height: 24}} />
-        <FadeText start={20}>
+        <FadeText start={10}>
           <div style={{fontFamily: FONT_SERIF, fontStyle: 'italic', fontSize: 34, color: subCol}}>{TEXT.sustain[i].sub}</div>
         </FadeText>
       </div>
