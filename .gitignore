@@ -3,3 +3,4 @@ out/*.mp4
 !out/FreshFix_Alumninastet2026_1080p.mp4
 .DS_Store
 __pycache__/
+assets/voice/
