@@ -89,19 +89,27 @@ export const BinDrop: React.FC<{start: number; color?: string}> = ({start, color
   const s = start;
   const items = [
     // äpple, bröd, banan – {d, delay, x, rot}
-    {d: 'M 0 18 c -18 0 -22 -24 -12 -34 c 6 -6 12 -4 14 -2 c 2 -2 8 -4 14 2 c 10 10 6 34 -12 34 z M 2 -16 q 2 -10 8 -12', delay: 20, x: 290, rot: 25},
-    {d: 'M -40 10 V -10 Q -40 -28 -20 -28 H 20 Q 40 -28 40 -10 V 10 Z M -20 -10 l 6 10 M 0 -12 l 6 10 M 20 -10 l 6 10', delay: 38, x: 318, rot: -18},
-    {d: 'M -40 -6 Q 0 30 40 -10 Q 0 14 -40 -6 Z', delay: 54, x: 300, rot: 40},
+    {d: 'M 0 18 c -18 0 -22 -24 -12 -34 c 6 -6 12 -4 14 -2 c 2 -2 8 -4 14 2 c 10 10 6 34 -12 34 z M 2 -16 q 2 -10 8 -12', delay: 12, x: 290, rot: 25},
+    {d: 'M -40 10 V -10 Q -40 -28 -20 -28 H 20 Q 40 -28 40 -10 V 10 Z M -20 -10 l 6 10 M 0 -12 l 6 10 M 20 -10 l 6 10', delay: 24, x: 318, rot: -18},
+    {d: 'M -40 -6 Q 0 30 40 -10 Q 0 14 -40 -6 Z', delay: 36, x: 300, rot: 40},
   ];
+  // lockets vinkel: öppnas strax innan första matbiten, stängs med en liten studs
+  const open = ramp(frame, s + 3, 9, EASE);
+  const close = ramp(frame, s + 62, 8, (x) => x * x);
+  const bounce = frame > s + 70 ? Math.sin((frame - s - 70) / 2.2) * Math.exp(-(frame - s - 70) / 5) * 6 : 0;
+  const lid = 62 * open * (1 - close) + bounce;
   return (
     <svg viewBox="0 0 600 600" style={{width: '100%', height: '100%', overflow: 'visible'}}>
-      {/* lock + tunna */}
-      <DrawPath d="M 200 290 H 400" start={s} dur={22} color={color} />
-      <DrawPath d="M 270 290 V 280 H 330 V 290" start={s + 6} dur={16} color={color} />
+      {/* tunna */}
+      {/* locket öppnas (gångjärn till höger) när maten kommer – och slår igen efteråt */}
+      <g transform={`rotate(${lid} 400 290)`}>
+        <DrawPath d="M 200 290 H 400" start={s} dur={22} color={color} />
+        <DrawPath d="M 270 290 V 280 H 330 V 290" start={s + 6} dur={16} color={color} />
+      </g>
       <DrawPath d="M 212 300 L 232 540 H 368 L 388 300" start={s + 4} dur={30} color={color} />
       <DrawPath d="M 265 330 L 272 510 M 300 330 V 510 M 335 330 L 328 510" start={s + 14} dur={26} color={color} width={2} />
       {items.map((it, i) => {
-        const t = ramp(frame, s + it.delay, 26, (x) => x * x); // gravitation
+        const t = ramp(frame, s + it.delay, 22, (x) => x * x); // gravitation
         const y = -60 + t * 360;
         const o = frame < s + it.delay ? 0 : t > 0.96 ? 0 : 1;
         return (
@@ -112,7 +120,8 @@ export const BinDrop: React.FC<{start: number; color?: string}> = ({start, color
       })}
       {/* litet "studs" i locket när något landar */}
       {items.map((it, i) => {
-        const t = ramp(frame, s + it.delay + 25, 14, EASE);
+        if (i > 0) return null;
+        const t = ramp(frame, s + 70, 14, EASE);
         if (t <= 0 || t >= 1) return null;
         return (
           <circle key={'r' + i} cx={300} cy={290} r={20 + t * 90} stroke={color} strokeWidth={1.5} fill="none" opacity={(1 - t) * 0.5} vectorEffect="non-scaling-stroke" />

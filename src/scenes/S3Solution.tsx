@@ -1,9 +1,87 @@
 import React from 'react';
-import {AbsoluteFill, Sequence, interpolate, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Sequence, interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
 import {C, FONT_SANS, FONT_SERIF, T, TEXT, f} from '../config';
 import {Bokeh, EASE, EASE_IN_OUT, FadeText, Grain, GrowLine, Label, LogoReveal, ProductPhoto, RiseText, ramp} from '../components/common';
 
 const S = T.scenes.solution;
+
+/** Bokstäver som studsar fram, en färgpuls, en ljusstrimma och en "ljudvåg" av streck. */
+const PresentPop: React.FC<{dur: number}> = ({dur}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const word = TEXT.solution.product;
+  const out = ramp(frame, dur - 7, 8, EASE_IN_OUT);
+  const disk = spring({frame: frame - 1, fps, config: {damping: 14, stiffness: 120}});
+  const ring = ramp(frame, 6, 24, EASE);
+  const shine = ramp(frame, 30, 11, EASE_IN_OUT);
+  const under = ramp(frame, 16, 14, EASE);
+  const labelT = ramp(frame, 0, 14, EASE);
+  const zoom = interpolate(frame, [0, dur], [1, 1.06]) + out * 0.25;
+  const letters = (
+    <>
+      {word.split('').map((ch, i) => {
+        const p = spring({frame: frame - 4 - i * 1.6, fps, config: {damping: 9, stiffness: 190, mass: 0.6}});
+        return (
+          <span
+            key={i}
+            style={{
+              display: 'inline-block',
+              transform: `translateY(${(1 - p) * 90}px) scale(${0.4 + 0.6 * p}) rotate(${(1 - p) * (i % 2 ? 14 : -14)}deg)`,
+              opacity: Math.min(1, p * 1.4),
+            }}
+          >
+            {ch}
+          </span>
+        );
+      })}
+      <span style={{display: 'inline-block', color: C.green, transform: `scale(${spring({frame: frame - 24, fps, config: {damping: 7, stiffness: 220}})})`}}>.</span>
+    </>
+  );
+  const textStyle: React.CSSProperties = {fontFamily: FONT_SERIF, fontWeight: 500, fontSize: 220, letterSpacing: '-0.01em', lineHeight: 1, whiteSpace: 'nowrap'};
+  return (
+    <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', opacity: 1 - out, filter: out > 0 ? `blur(${out * 12}px)` : undefined}}>
+      {/* mjuk färgpuls bakom ordet */}
+      <div style={{position: 'absolute', width: 1100, height: 1100, borderRadius: '50%', background: `radial-gradient(circle, rgba(120,130,106,0.30) 0%, rgba(120,130,106,0.08) 45%, rgba(120,130,106,0) 70%)`, transform: `scale(${disk})`}} />
+      {/* ring + streck som skjuts ut */}
+      <div style={{position: 'absolute', width: 520, height: 520, borderRadius: '50%', border: `2px solid ${C.green}`, transform: `scale(${0.6 + ring * 1.4})`, opacity: (1 - ring) * 0.6}} />
+      <svg viewBox="-500 -500 1000 1000" style={{position: 'absolute', width: 1000, height: 1000, overflow: 'visible'}}>
+        {Array.from({length: 14}).map((_, k) => {
+          const ang = (k / 14) * Math.PI * 2;
+          const r0 = 300 + ring * 140;
+          const r1 = r0 + 40 * (1 - ring);
+          return (
+            <line key={k} x1={Math.cos(ang) * r0} y1={Math.sin(ang) * r0 * 0.55} x2={Math.cos(ang) * r1} y2={Math.sin(ang) * r1 * 0.55} stroke={C.green} strokeWidth={3} strokeLinecap="round" opacity={(1 - ring) * (ring > 0 ? 0.9 : 0)} />
+          );
+        })}
+      </svg>
+      <div style={{transform: `scale(${zoom})`, display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+        <div style={{fontFamily: FONT_SANS, fontSize: 24, fontWeight: 600, letterSpacing: `${0.9 - labelT * 0.5}em`, textTransform: 'uppercase', color: C.green, opacity: labelT, marginBottom: 18}}>
+          {TEXT.solution.presentSmall}
+        </div>
+        <div style={{position: 'relative'}}>
+          <div style={{...textStyle, color: C.charcoal}}>{letters}</div>
+          {/* ljusstrimma över texten */}
+          {shine > 0 && shine < 1 ? (
+            <div
+              style={{
+                ...textStyle,
+                position: 'absolute',
+                inset: 0,
+                color: 'transparent',
+                backgroundImage: `linear-gradient(100deg, rgba(255,255,255,0) ${shine * 140 - 30}%, rgba(255,255,255,0.85) ${shine * 140 - 15}%, rgba(255,255,255,0) ${shine * 140}%)`,
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+              }}
+            >
+              {word}.
+            </div>
+          ) : null}
+        </div>
+        <div style={{height: 5, width: 640 * under, background: C.green, borderRadius: 3, marginTop: 14}} />
+      </div>
+    </AbsoluteFill>
+  );
+};
 
 export const S3Solution: React.FC = () => {
   const frame = useCurrentFrame();
@@ -17,7 +95,6 @@ export const S3Solution: React.FC = () => {
   const light = ramp(frame, 0, 24, EASE_IN_OUT);
   const glow = ramp(frame, 8, 40, EASE);
   const qOut = ramp(frame, present - 10, 12, EASE_IN_OUT);
-  const presOut = ramp(frame, product - 6, 8, EASE_IN_OUT);
 
   return (
     <AbsoluteFill style={{background: C.beige}}>
@@ -40,19 +117,9 @@ export const S3Solution: React.FC = () => {
         <RiseText text={TEXT.solution.question} start={L(S.question) + 4} size={76} weight={600} align="left" color={C.charcoal} tracking={-0.03} stagger={2} />
       </div>
 
-      {/* "Vi presenterar FreshFixer." */}
+      {/* "Vi presenterar FreshFixer." – poppande avtäckning */}
       <Sequence from={present} durationInFrames={product - present + 2}>
-        <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', opacity: 1 - presOut}}>
-          <FadeText start={0}>
-            <Label color={C.green} style={{fontSize: 22, textAlign: 'center'}}>
-              {TEXT.solution.presentSmall}
-            </Label>
-          </FadeText>
-          <div style={{height: 20}} />
-          <div style={{transform: `scale(${interpolate(frame - present, [0, product - present], [0.96, 1.04])})`}}>
-            <RiseText text={TEXT.solution.product + '.'} start={4} size={210} weight={500} serif color={C.charcoal} tracking={-0.01} dur={18} />
-          </div>
-        </AbsoluteFill>
+        <PresentPop dur={product - present} />
       </Sequence>
 
       {/* Hjältebild: riktigt studiofoto, kameran glider in */}

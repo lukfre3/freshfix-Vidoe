@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, Sequence, interpolate, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Sequence, interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
 import {C, FONT_SANS, FONT_SERIF, T, TEXT, f} from '../config';
 import {Bokeh, EASE, EASE_IN_OUT, FadeText, Grain, Label, RiseText, Source, Vignette, ramp} from '../components/common';
 
@@ -43,6 +43,70 @@ const DotGrid: React.FC<{count: number; cols: number; highlight?: number; start:
   );
 };
 
+/** Två vuxna och två barn – var och en "kostar" sin del av matsvinnet. */
+const Person: React.FC<{child?: boolean; start: number; color: string}> = ({child = false, start, color}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const pop = spring({frame: frame - start, fps, config: {damping: 11, stiffness: 160, mass: 0.7}});
+  const h = child ? 185 : 265;
+  const draw = ramp(frame, start, 18);
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', width: 128}}>
+      <div style={{height: 265, display: 'flex', alignItems: 'flex-end'}}>
+        <svg
+          viewBox="0 0 100 200"
+          style={{height: h, overflow: 'visible', transform: `translateY(${(1 - pop) * 40}px) scale(${0.6 + 0.4 * pop})`, transformOrigin: '50% 100%', opacity: Math.min(1, pop * 1.5)}}
+        >
+          <circle cx={50} cy={30} r={21} fill="none" stroke={color} strokeWidth={4} pathLength={1} strokeDasharray="1 1" strokeDashoffset={1 - draw} />
+          <path
+            d="M 14 198 V 104 Q 14 66 50 66 Q 86 66 86 104 V 198"
+            fill={color}
+            fillOpacity={0.12 * draw}
+            stroke={color}
+            strokeWidth={4}
+            strokeLinecap="round"
+            pathLength={1}
+            strokeDasharray="1 1"
+            strokeDashoffset={1 - draw}
+          />
+        </svg>
+      </div>
+      <div
+        style={{
+          marginTop: 16,
+          fontFamily: FONT_SANS,
+          fontSize: 23,
+          fontWeight: 600,
+          color: C.sand,
+          fontVariantNumeric: 'tabular-nums',
+          opacity: ramp(frame, start + 10, 12),
+          transform: `translateY(${(1 - ramp(frame, start + 10, 16)) * 10}px)`,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        −1 330 kr
+      </div>
+    </div>
+  );
+};
+
+const Family: React.FC = () => (
+  <div>
+    <div style={{display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between'}}>
+      <Person start={8} color={C.beige} />
+      <Person start={13} color={C.beige} />
+      <Person child start={18} color={C.green} />
+      <Person child start={23} color={C.green} />
+    </div>
+    <div style={{height: 2, background: 'rgba(238,231,219,0.25)', margin: '18px 0 16px'}} />
+    <FadeText start={36}>
+      <Label color="rgba(238,231,219,0.6)" style={{fontSize: 16, letterSpacing: '0.24em', textAlign: 'center'}}>
+        2 vuxna + 2 barn ≈ 5 300 kr / år
+      </Label>
+    </FadeText>
+  </div>
+);
+
 const Fact: React.FC<{i: number; dur: number}> = ({i, dur}) => {
   const frame = useCurrentFrame();
   const fact = TEXT.facts[i];
@@ -69,7 +133,7 @@ const Fact: React.FC<{i: number; dur: number}> = ({i, dur}) => {
           style={{
             fontFamily: FONT_SANS,
             fontWeight: 600,
-            fontSize: i === 2 ? 168 : 260,
+            fontSize: i === 2 ? 140 : 260,
             letterSpacing: '-0.05em',
             color: C.white,
             lineHeight: 1,
@@ -108,20 +172,8 @@ const Fact: React.FC<{i: number; dur: number}> = ({i, dur}) => {
           </FadeText>
         </div>
       ) : (
-        <div style={{position: 'absolute', right: 130, top: 560, width: 380}}>
-          {/* stapel som "fylls" med pengar som går förlorade */}
-          {[0, 1, 2, 3].map((k) => {
-            const t = ramp(frame, 10 + k * 6, 30);
-            return (
-              <div key={k} style={{display: 'flex', alignItems: 'center', gap: 18, marginBottom: 26}}>
-                <div style={{width: 46, height: 46, borderRadius: 23, border: `2px solid ${k < 2 ? C.beige : C.sand}`, opacity: t, transform: `scale(${k < 2 ? 1 : 0.8})`}} />
-                <div style={{height: 10, borderRadius: 5, background: k < 2 ? C.green : C.sand, width: 280 * t}} />
-              </div>
-            );
-          })}
-          <FadeText start={46}>
-            <Label color="rgba(238,231,219,0.5)" style={{fontSize: 14, letterSpacing: '0.24em'}}>2 vuxna + 2 barn</Label>
-          </FadeText>
+        <div style={{position: 'absolute', right: 110, top: 300, width: 540}}>
+          <Family />
         </div>
       )}
       <FadeText start={30}>

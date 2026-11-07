@@ -262,6 +262,14 @@ for t0 in SC["facts"]["items"]:
 # riser + hit när FreshFixer presenteras
 pres, prod = SC["solution"]["present"], SC["solution"]["product"]
 add(sfx, pres, riser(prod - pres, 0.22))
+# "pop" när bokstäverna i FreshFixer studsar fram
+for k in range(11):
+    tp = pres + (4 + k * 1.6) / 30
+    nn = int(0.05 * SR)
+    tt = np.arange(nn) / SR
+    pop = np.sin(2 * np.pi * (900 + k * 60) * tt * (1 - tt * 6)) * np.exp(-tt * 70)
+    add(sfx, tp, pop, 0.05, pan=-0.5 + k * 0.1)
+add(sfx, pres + 0.05, sub_boom(0.35, 1.0))
 add(music, prod, sub_boom(0.9, 3.0))
 add(music, prod, pad([48, 55, 60, 64, 67, 72], 2.6, cutoff=3000, gain=0.2, attack=0.01, release=2.5))
 add(sfx, prod + 0.25, ping(1180, 0.10), pan=0.25)
