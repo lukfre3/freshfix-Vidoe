@@ -5,6 +5,98 @@ import {Bokeh, EASE, EASE_IN_OUT, FadeText, Grain, GrowLine, Label, LogoReveal, 
 
 const S = T.scenes.solution;
 
+const SHOTS: {which: 'angle' | 'front' | 'upright'; zoom: [number, number]; pan: [number, number]}[] = [
+  {which: 'angle', zoom: [1.45, 1.7], pan: [0, -2]},
+  {which: 'front', zoom: [1.9, 2.15], pan: [-2, 2]},
+  {which: 'upright', zoom: [2.5, 2.85], pan: [3, -1]},
+  {which: 'angle', zoom: [2.4, 2.1], pan: [-3, 1]},
+  {which: 'angle', zoom: [1.5, 1.4], pan: [0, 0]},
+];
+
+/** Produktsidan: cirkel öppnas, klipp på varje taktslag, egenskaper poppar fram runt produkten. */
+const ProductReveal: React.FC<{dur: number}> = ({dur}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const beat = (60 / T.bpm) * fps;
+  const idx = Math.min(SHOTS.length - 1, Math.floor(frame / beat));
+  const local = frame - idx * beat;
+  const shot = SHOTS[idx];
+  const iris = spring({frame, fps, config: {damping: 16, stiffness: 90}});
+  const punch = 1.06 - 0.06 * ramp(local, 0, 10, EASE);
+  const flash = idx > 0 ? 1 - ramp(local, 0, 5) : 0;
+  const feats = TEXT.solution.features;
+  const POS = [
+    {x: 150, y: 330, side: 'L'},
+    {x: 1770, y: 330, side: 'R'},
+    {x: 150, y: 760, side: 'L'},
+    {x: 1770, y: 760, side: 'R'},
+  ] as const;
+  const titleIn = spring({frame: frame - 2, fps, config: {damping: 12, stiffness: 120}});
+  const tagT = ramp(frame, beat * 4, 14, EASE);
+  return (
+    <AbsoluteFill style={{background: C.charcoal}}>
+      <AbsoluteFill style={{clipPath: `circle(${iris * 85}% at 50% 52%)`}}>
+        <AbsoluteFill style={{transform: `scale(${punch})`}}>
+          <Sequence from={Math.round(idx * beat)} durationInFrames={Math.round(beat) + 2} layout="none">
+            <ProductPhoto which={shot.which} dur={Math.round(beat)} zoom={shot.zoom} pan={shot.pan} sweepStart={2} sweepDur={Math.round(beat)} />
+          </Sequence>
+        </AbsoluteFill>
+        <AbsoluteFill style={{background: 'linear-gradient(180deg, rgba(20,21,20,0.55) 0%, rgba(20,21,20,0) 30%, rgba(20,21,20,0) 65%, rgba(20,21,20,0.65) 100%)'}} />
+      </AbsoluteFill>
+      {/* grön ram som pulserar på takten */}
+      <AbsoluteFill style={{border: `${10 * (1 - ramp(local, 0, 8))}px solid ${C.green}`, opacity: idx > 0 ? 0.9 : 0}} />
+      <AbsoluteFill style={{background: '#fff', opacity: flash * 0.35}} />
+      <Bokeh count={12} opacity={0.25} seed={6} />
+
+      {/* titel */}
+      <div style={{position: 'absolute', top: 70, width: '100%', textAlign: 'center'}}>
+        <div style={{fontFamily: FONT_SERIF, fontWeight: 600, fontSize: 108, color: C.white, letterSpacing: `${0.3 - titleIn * 0.3}em`, opacity: Math.min(1, titleIn * 1.3), textShadow: '0 6px 30px rgba(0,0,0,0.35)'}}>
+          FreshFixer
+        </div>
+      </div>
+
+      {/* egenskaper – en per taktslag */}
+      {feats.map((txt, k) => {
+        const st = Math.round(beat * k) + 6;
+        const p = spring({frame: frame - st, fps, config: {damping: 10, stiffness: 170, mass: 0.6}});
+        const line = ramp(frame, st + 4, 12, EASE);
+        const pos = POS[k];
+        const left = pos.side === 'L';
+        return (
+          <div key={txt} style={{position: 'absolute', top: pos.y, [left ? 'left' : 'right']: 1920 - pos.x > 960 ? pos.x : 1920 - pos.x, display: 'flex', alignItems: 'center', flexDirection: left ? 'row' : 'row-reverse', gap: 0, opacity: Math.min(1, p * 1.5)}}>
+            <div
+              style={{
+                padding: '16px 28px',
+                borderRadius: 50,
+                background: 'rgba(27,28,26,0.72)',
+                border: `1.5px solid rgba(238,231,219,0.35)`,
+                backdropFilter: 'blur(10px)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                transform: `scale(${0.5 + 0.5 * p}) translateX(${(1 - p) * (left ? -60 : 60)}px)`,
+                transformOrigin: left ? '0% 50%' : '100% 50%',
+              }}
+            >
+              <div style={{width: 14, height: 14, borderRadius: 7, background: C.green, boxShadow: `0 0 0 ${6 * (1 - ramp(frame, st, 16))}px rgba(120,130,106,0.5)`}} />
+              <div style={{fontFamily: FONT_SANS, fontSize: 38, fontWeight: 600, color: C.white, whiteSpace: 'nowrap'}}>{txt}</div>
+            </div>
+            <div style={{height: 2, width: 170 * line, background: C.beige, opacity: 0.8}} />
+            <div style={{width: 10, height: 10, borderRadius: 5, background: C.beige, opacity: line}} />
+          </div>
+        );
+      })}
+
+      {/* taggline på sista slaget */}
+      <div style={{position: 'absolute', bottom: 80, width: '100%', display: 'flex', justifyContent: 'center'}}>
+        <div style={{padding: '14px 34px', borderRadius: 50, background: C.green, opacity: tagT, transform: `translateY(${(1 - tagT) * 30}px) scale(${0.9 + tagT * 0.1})`}}>
+          <div style={{fontFamily: FONT_SANS, fontSize: 32, fontWeight: 600, color: C.white, letterSpacing: '0.04em'}}>{TEXT.solution.tagline}</div>
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
 /** Bokstäver som studsar fram, en färgpuls, en ljusstrimma och en "ljudvåg" av streck. */
 const PresentPop: React.FC<{dur: number}> = ({dur}) => {
   const frame = useCurrentFrame();
@@ -34,7 +126,6 @@ const PresentPop: React.FC<{dur: number}> = ({dur}) => {
           </span>
         );
       })}
-      <span style={{display: 'inline-block', color: C.green, transform: `scale(${spring({frame: frame - 24, fps, config: {damping: 7, stiffness: 220}})})`}}>.</span>
     </>
   );
   const textStyle: React.CSSProperties = {fontFamily: FONT_SERIF, fontWeight: 500, fontSize: 220, letterSpacing: '-0.01em', lineHeight: 1, whiteSpace: 'nowrap'};
@@ -73,7 +164,7 @@ const PresentPop: React.FC<{dur: number}> = ({dur}) => {
                 backgroundClip: 'text',
               }}
             >
-              {word}.
+              {word}
             </div>
           ) : null}
         </div>
@@ -122,35 +213,9 @@ export const S3Solution: React.FC = () => {
         <PresentPop dur={product - present} />
       </Sequence>
 
-      {/* Hjältebild: riktigt studiofoto, kameran glider in */}
-      <Sequence from={product} durationInFrames={close - product + 6}>
-        <AbsoluteFill style={{opacity: ramp(frame - product, 0, 6)}}>
-          <ProductPhoto which="angle" dur={close - product + 6} zoom={[1.55, 1.85]} pan={[2, -2]} sweepStart={8} sweepDur={40} />
-          <Bokeh count={14} opacity={0.25} seed={3} />
-          <div style={{position: 'absolute', top: 96, width: '100%', textAlign: 'center'}}>
-            <div style={{fontFamily: FONT_SERIF, fontWeight: 500, fontSize: 92, color: C.white, opacity: ramp(frame - product, 4, 16), letterSpacing: '0.01em'}}>
-              FreshFixer
-            </div>
-          </div>
-          <FadeText start={14} style={{position: 'absolute', bottom: 96, width: '100%', textAlign: 'center'}}>
-            <div style={{fontFamily: FONT_SANS, fontSize: 22, letterSpacing: '0.3em', textTransform: 'uppercase', color: C.beige}}>
-              {TEXT.solution.tagline}
-            </div>
-          </FadeText>
-        </AbsoluteFill>
-      </Sequence>
-
-      {/* Makrobild på det rostfria stålet */}
-      <Sequence from={close} durationInFrames={total - close}>
-        <AbsoluteFill style={{opacity: ramp(frame - close, 0, 6)}}>
-          <ProductPhoto which="upright" dur={total - close} zoom={[2.3, 2.7]} pan={[3, -3]} rotate={[-1, 1]} sweepStart={2} sweepDur={36} />
-          <div style={{position: 'absolute', left: 140, bottom: 120}}>
-            <FadeText start={4}>
-              <Label color={C.beige}>Rostfritt stål · Återanvändbar behållare</Label>
-            </FadeText>
-            <GrowLine start={8} width={260} color={C.beige} style={{marginTop: 16}} />
-          </div>
-        </AbsoluteFill>
+      {/* Produktsidan: snabba klipp i takt, egenskaper som poppar fram */}
+      <Sequence from={product} durationInFrames={total - product}>
+        <ProductReveal dur={total - product} />
       </Sequence>
       <Grain opacity={0.05} />
     </AbsoluteFill>

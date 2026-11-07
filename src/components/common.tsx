@@ -25,17 +25,16 @@ export const ramp = (frame: number, a: number, d: number, ease = EASE) =>
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 // ---------------------------------------------------------------- Typsnitt
+// Crimson Pro – fritt typsnitt i Minions anda. Har ni Minion Pro (licens): lägg .otf/.woff2 i
+// public/fonts/ och byt filnamnen här + familjenamnet i src/config.ts.
 const FONT_FACES = [
-  ['Inter', 300, 'normal', 'inter-latin-300-normal.woff2'],
-  ['Inter', 400, 'normal', 'inter-latin-400-normal.woff2'],
-  ['Inter', 500, 'normal', 'inter-latin-500-normal.woff2'],
-  ['Inter', 600, 'normal', 'inter-latin-600-normal.woff2'],
-  ['Inter', 700, 'normal', 'inter-latin-700-normal.woff2'],
-  ['Cormorant Garamond', 400, 'normal', 'cormorant-garamond-latin-400-normal.woff2'],
-  ['Cormorant Garamond', 500, 'normal', 'cormorant-garamond-latin-500-normal.woff2'],
-  ['Cormorant Garamond', 600, 'normal', 'cormorant-garamond-latin-600-normal.woff2'],
-  ['Cormorant Garamond', 400, 'italic', 'cormorant-garamond-latin-400-italic.woff2'],
-  ['Cormorant Garamond', 500, 'italic', 'cormorant-garamond-latin-500-italic.woff2'],
+  ['Crimson Pro', 300, 'normal', 'crimson-pro-latin-300-normal.woff2'],
+  ['Crimson Pro', 400, 'normal', 'crimson-pro-latin-400-normal.woff2'],
+  ['Crimson Pro', 500, 'normal', 'crimson-pro-latin-500-normal.woff2'],
+  ['Crimson Pro', 600, 'normal', 'crimson-pro-latin-600-normal.woff2'],
+  ['Crimson Pro', 700, 'normal', 'crimson-pro-latin-700-normal.woff2'],
+  ['Crimson Pro', 400, 'italic', 'crimson-pro-latin-400-italic.woff2'],
+  ['Crimson Pro', 500, 'italic', 'crimson-pro-latin-500-italic.woff2'],
 ] as const;
 
 export const FontLoader: React.FC = () => {
@@ -204,9 +203,9 @@ export const Label: React.FC<{children: React.ReactNode; color?: string; style?:
   <div
     style={{
       fontFamily: FONT_SANS,
-      fontSize: 18,
-      fontWeight: 500,
-      letterSpacing: '0.32em',
+      fontSize: 22,
+      fontWeight: 600,
+      letterSpacing: '0.28em',
       textTransform: 'uppercase',
       color,
       ...style,
@@ -223,7 +222,7 @@ export const Source: React.FC<{children: React.ReactNode; color?: string}> = ({c
       left: 120,
       bottom: 64,
       fontFamily: FONT_SANS,
-      fontSize: 17,
+      fontSize: 21,
       fontWeight: 400,
       letterSpacing: '0.02em',
       color,

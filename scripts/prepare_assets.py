@@ -105,7 +105,7 @@ def video(name, slow=2.0):
     )
 
 
-if __name__ == "__main__":
+def main():
     # Produktfotona används hela (ingen frilagning) – endast exponeringen lyfts något.
     for n in CUTOUTS:
         lift(Image.open(os.path.join(SRC, n + ".jpg")).convert("RGB")).save(os.path.join(IMG, n + ".jpg"), quality=93)
@@ -113,4 +113,45 @@ if __name__ == "__main__":
     copy_plain()
     video("stangning_med_pase")
     video("stangning_tom")
+    map_recolor()
     print("Klart.")
+
+
+def map_recolor():
+    """Kartan över Uppland/Stockholm färgas om till filmens palett och den röda nålen tas bort
+    (en egen animerad nål läggs på i filmen)."""
+    bgr = cv2.imread(os.path.join(SRC, "karta_uppland.jpg"))
+    b, g, r = [bgr[..., i].astype(np.int32) for i in range(3)]
+    # ta bort röd kartnål
+    red = ((r > 150) & (g < 90) & (b < 90)).astype(np.uint8) * 255
+    red = cv2.dilate(red, np.ones((9, 9), np.uint8))
+    bgr = cv2.inpaint(bgr, red, 9, cv2.INPAINT_TELEA)
+    img = bgr.astype(np.float32) / 255
+    b, g, r = img[..., 0], img[..., 1], img[..., 2]
+    lum = 0.299 * r + 0.587 * g + 0.114 * b
+    water = (b > g + 0.04) & (b > r + 0.12)
+    water = cv2.medianBlur(water.astype(np.uint8) * 255, 5) > 127
+    green = np.array([106, 130, 120], np.float32) / 255  # #78826A (BGR)
+    green_dark = np.array([56, 74, 62], np.float32) / 255  # #3E4A38
+    black = np.array([26, 28, 27], np.float32) / 255  # #1B1C1A
+    white = np.array([235, 245, 250], np.float32) / 255
+    # land: ljust grönt -> varumärkesgrönt, mörka detaljer (text, vägar, gränser) -> vitt
+    land_ref = np.percentile(lum[~water], 60)
+    t = np.clip((land_ref - lum) / (land_ref - 0.12), 0, 1) ** 0.8
+    shade = np.clip((lum - land_ref) * 3, -0.15, 0.15)[..., None]  # skogsnyanser
+    land_col = green[None, None] * (1 + shade) * (1 - t[..., None]) + white[None, None] * t[..., None]
+    # vatten: svart, vattentexter/linjer -> ljusgrå
+    w_ref = np.percentile(lum[water], 50)
+    tw = np.clip((w_ref - lum) / (w_ref - 0.2), 0, 1)
+    water_col = black[None, None] * (1 - tw[..., None]) + green_dark[None, None] * tw[..., None]
+    out = np.where(water[..., None], water_col, land_col)
+    out = (np.clip(out, 0, 1) * 255).astype(np.uint8)
+    out = cv2.GaussianBlur(out, (3, 3), 0)
+    cv2.imwrite(os.path.join(IMG, "karta_uppland.jpg"), out, [cv2.IMWRITE_JPEG_QUALITY, 93])
+
+
+if __name__ == "__main__":
+    if os.environ.get("ONLY_MAP"):
+        map_recolor()
+    else:
+        main()

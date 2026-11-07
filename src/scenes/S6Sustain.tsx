@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, Img, OffthreadVideo, Sequence, staticFile, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Easing, Img, OffthreadVideo, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {C, FONT_SANS, FONT_SERIF, T, TEXT, f} from '../config';
 import {EASE, EASE_IN_OUT, FadeText, Grain, GrowLine, KenBurns, Label, RiseText, ramp} from '../components/common';
 
@@ -7,6 +7,7 @@ const S = T.scenes.sustain;
 
 const Visual: React.FC<{i: number; dur: number}> = ({i, dur}) => {
   const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
   if (i === 0) return <KenBurns src="img/freshfixer_upright.jpg" dur={dur} from={[1.9, 30, 40]} to={[2.15, 36, 46]} />;
   if (i === 1)
     return (
@@ -19,27 +20,46 @@ const Visual: React.FC<{i: number; dur: number}> = ({i, dur}) => {
         />
       </AbsoluteFill>
     );
-  if (i === 2)
+  if (i === 2) {
+    // Karta över Uppland/Stockholm (er bild, omfärgad) – nålen faller ned över Uppsala
+    const W = 960;
+    const H = (W * 1478) / 1064;
+    const ux = 0.4746 * W;
+    const uy = 0.4973 * H;
+    const top = 560 - uy;
+    const z = 1 + 0.22 * ramp(frame, 0, dur, Easing.bezier(0.33, 0, 0.2, 1));
+    const drop = spring({frame: frame - 8, fps, config: {damping: 9, stiffness: 140, mass: 0.7}});
+    const chip = ramp(frame, 22, 12, EASE);
     return (
-      <AbsoluteFill style={{background: `linear-gradient(160deg, ${C.green} 0%, ${C.greenDark} 100%)`, alignItems: 'center', justifyContent: 'center'}}>
-        <div style={{fontFamily: FONT_SERIF, fontSize: 190, fontWeight: 500, color: C.beige, opacity: ramp(frame, 4, 20), transform: `translateY(${(1 - ramp(frame, 4, 30)) * 30}px)`}}>
-          Uppsala
-        </div>
-        <FadeText start={14}>
-          <div style={{fontFamily: FONT_SANS, fontSize: 22, letterSpacing: '0.3em', color: 'rgba(238,231,219,0.75)'}}>59.8586° N · 17.6389° E</div>
-        </FadeText>
-        {/* pulserande platsmarkering */}
-        <div style={{position: 'absolute', left: '50%', top: '22%', transform: 'translate(-50%,-50%)'}}>
-          {[0, 1].map((k) => {
-            const t = ((frame + k * 22) % 44) / 44;
-            return (
-              <div key={k} style={{position: 'absolute', left: -60 * t, top: -60 * t, width: 120 * t, height: 120 * t, borderRadius: '50%', border: `2px solid ${C.beige}`, opacity: (1 - t) * 0.7}} />
-            );
+      <AbsoluteFill style={{background: C.charcoal, overflow: 'hidden'}}>
+        <div style={{position: 'absolute', left: 0, top, width: W, height: H, transform: `scale(${z})`, transformOrigin: `${ux}px ${uy}px`}}>
+          <Img src={staticFile('img/karta_uppland.jpg')} style={{width: W, height: H}} />
+          {/* pulserande ringar */}
+          {[0, 1, 2].map((k) => {
+            const t = (((frame - 14 + k * 12) % 36) + 36) % 36 / 36;
+            return frame > 14 ? (
+              <div key={k} style={{position: 'absolute', left: ux - 70 * t, top: uy - 70 * t * 0.6, width: 140 * t, height: 140 * t * 0.6, borderRadius: '50%', border: `2px solid ${C.white}`, opacity: (1 - t) * 0.8}} />
+            ) : null;
           })}
-          <div style={{position: 'absolute', left: -7, top: -7, width: 14, height: 14, borderRadius: 7, background: C.beige}} />
+          {/* kartnål */}
+          <div style={{position: 'absolute', left: ux - 32, top: uy - 86 - (1 - drop) * 300, opacity: Math.min(1, drop * 2)}}>
+            <svg width={64} height={88} viewBox="0 0 64 88" style={{overflow: 'visible', filter: 'drop-shadow(0 8px 10px rgba(0,0,0,0.45))'}}>
+              <path d="M32 86 C 32 86 4 52 4 32 A 28 28 0 1 1 60 32 C 60 52 32 86 32 86 Z" fill={C.white} />
+              <circle cx={32} cy={31} r={12} fill={C.green} />
+            </svg>
+          </div>
+          <div style={{position: 'absolute', left: ux - 40 * (1 - drop * 0.6), top: uy - 6, width: 80 * (0.4 + 0.6 * drop) - 0, height: 12, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', filter: 'blur(3px)', opacity: drop}} />
+        </div>
+        {/* etikett */}
+        <div style={{position: 'absolute', left: 80, bottom: 90, opacity: chip, transform: `translateY(${(1 - chip) * 20}px)`}}>
+          <div style={{display: 'inline-flex', alignItems: 'center', gap: 14, padding: '14px 26px', borderRadius: 40, background: 'rgba(27,28,26,0.8)', border: '1px solid rgba(255,255,255,0.3)'}}>
+            <div style={{width: 12, height: 12, borderRadius: 6, background: C.green}} />
+            <div style={{fontFamily: FONT_SANS, fontSize: 28, fontWeight: 600, color: C.white}}>Här tillverkas FreshFixer</div>
+          </div>
         </div>
       </AbsoluteFill>
     );
+  }
   if (i === 3) return <KenBurns src="img/forpackning.jpg" dur={dur} from={[1.15, 50, 52]} to={[1.3, 50, 56]} />;
   return (
     <AbsoluteFill style={{background: C.beige, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 40}}>

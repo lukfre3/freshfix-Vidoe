@@ -86,7 +86,7 @@ const Pase: React.FC<{dur: number}> = ({dur}) => {
         <RiseText text={TEXT.how.pase.title} start={8} size={76} weight={600} align="left" color={C.white} tracking={-0.02} />
         <div style={{height: 26}} />
         <FadeText start={26}>
-          <div style={{fontFamily: FONT_SANS, fontSize: 28, lineHeight: 1.45, color: 'rgba(238,231,219,0.75)', width: 620}}>{TEXT.how.pase.line}</div>
+          <div style={{fontFamily: FONT_SANS, fontSize: 32, lineHeight: 1.4, color: 'rgba(238,231,219,0.8)', width: 680}}>{TEXT.how.pase.line}</div>
         </FadeText>
         <FadeText start={34} style={{display: 'flex', gap: 22, marginTop: 34}}>
           {[

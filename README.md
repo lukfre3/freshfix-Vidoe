@@ -48,7 +48,7 @@ public/                   Bearbetat material som filmen använder
   img/                    Frilagda produktbilder (*_cutout.png), vit logotyp, foton
   video/                  iPhone-klippen konverterade från HDR till SDR, i slowmotion
   audio/soundtrack.wav    Musik + ljudeffekter (genereras av scripts/make_audio.py)
-  fonts/                  Inter + Cormorant Garamond (fria typsnitt, OFL)
+  fonts/                  Crimson Pro (fritt typsnitt i Minions stil, OFL)
 scripts/
   prepare_assets.py       Frilägger produkten, gör logotypen vit/transparent, konverterar klippen
   sync_music.py           ★ Scenplan i taktslag + tempomätning av er låt → timeline.json
@@ -76,6 +76,15 @@ exakt som i verkligheten. Logotypen är er riktiga logga (`assets/source/logo.jp
 
 Kol- och zeolitgranulerna och linjegrafiken i inledningen är skapade med kod (inte stockfilm).
 
+## Typsnitt och karta
+
+All text sätts i **Crimson Pro**, ett fritt typsnitt formgivet i Minions anda. Minion Pro/Century är
+licensierade (Adobe/Monotype) och kan inte läggas med i projektet. Har ni en licens: lägg filerna i
+`public/fonts/` och ändra `FONT_FACES` i `src/components/common.tsx` och `FONT_SANS/FONT_SERIF` i `src/config.ts`.
+
+Kartan i hållbarhetsscenen är er bild (`assets/source/karta_uppland.jpg`), omfärgad till filmens palett
+av `scripts/prepare_assets.py` (`ONLY_MAP=1 python3 scripts/prepare_assets.py`).
+
 ## Speakerröst
 
 Filmen har ingen speakerröst. Vill ni lägga till en kan den genereras lokalt med Piper (`npm run voice`,
@@ -88,6 +97,7 @@ och kör `npm run audio && npm run render`. Rösten mixas in och musiken sänks 
 
 | Påstående i filmen | Källa |
 | --- | --- |
+| Fakta om matsvinn (alla siffror) | Livsmedelsverket, *Fakta om matsvinn*: https://www.livsmedelsverket.se/matvanor-halsa--miljo/matsvinn/fakta-om-matsvinn/ |
 | En barnfamilj (2 vuxna + 2 barn) slänger cirka 130 kg mat per år | Livsmedelsverket, *PM 2024 – Vad kostar matsvinnet i hemmet?* (ca 33 kg per person och år, 2022 års data) |
 | 34 kg matsvinn per person och år, varav cirka 16 kg i soppåsen och resten i vasken (ca 18 kg) | Livsmedelsverket, *Konsumentundersökning matsvinn 2024* (2025); jfr *Matsvinn i hemmet 2022* (L 2023 nr 03) |
 | 5 000–6 000 kr per år för en familj med två vuxna och två barn | Livsmedelsverket, *PM 2024 – Vad kostar matsvinnet i hemmet?* (ca 1 330 kr per person och år ≈ 5 300 kr för fyra personer) |

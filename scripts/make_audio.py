@@ -369,6 +369,17 @@ for t in [SC["facts"]["start"], SC["solution"]["start"], SC["how"]["kol"], SC["h
     add(sfx, t - 0.45, whoosh(0.9, 0.16))
 for k in range(1, 5):
     add(sfx, SC["sustain"]["start"] + k * SC["sustain"]["each"] - 0.3, whoosh(0.6, 0.11))
+# produktsidan: kort "swish" + klick på varje klipp
+for k in range(1, 5):
+    tk = SC["solution"]["product"] + k * BEAT
+    if tk < SC["solution"]["end"]:
+        add(sfx, tk - 0.1, whoosh(0.22, 0.09), pan=(-0.4 if k % 2 else 0.4))
+        add(sfx, tk, tick(0.06, 2400))
+# kartnålen landar över Uppsala
+t_pin = SC["sustain"]["start"] + 2 * SC["sustain"]["each"] + 8 / 30 + 0.3
+add(sfx, t_pin, ping(1500, 0.06, 1.2))
+add(sfx, t_pin, sub_boom(0.25, 0.6))
+
 # granuler som faller – små, torra klick (aktivt kol: mörkare, zeolit: ljusare)
 for name, f_lo, f_hi, t0, t1 in (("kol", 1200, 4000, SC["how"]["kol"], SC["how"]["zeolit"]),
                                   ("zeolit", 2500, 7000, SC["how"]["zeolit"], SC["how"]["pase"]),
