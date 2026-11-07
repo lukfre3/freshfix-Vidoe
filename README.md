@@ -78,8 +78,8 @@ Kol- och zeolitgranulerna och linjegrafiken i inledningen är skapade med kod (i
 
 ## Speakerröst
 
-Filmen har en svensk speakerröst som genereras lokalt med Piper (`npm run voice`, se instruktionen överst i
-`scripts/make_voiceover.py` för att hämta röstmodellen). Ändra repliker eller tider i det skriptet.
+Filmen har ingen speakerröst. Vill ni lägga till en kan den genereras lokalt med Piper (`npm run voice`,
+se `scripts/make_voiceover.py`) eller spelas in enligt manuset nedan.
 
 Manus med tider finns i `docs/speakermanus.md`. Lägg inspelningen som `public/audio/voiceover.wav`
 och kör `npm run audio && npm run render`. Rösten mixas in och musiken sänks automatiskt under den.

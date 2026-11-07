@@ -1,7 +1,7 @@
 # Speakermanus – FreshFix UF (60 s)
 
-Filmen har nu en genererad svensk speakerröst (Piper, `npm run voice`). Repliker och tider finns i
-`scripts/make_voiceover.py`. Vill ni hellre spela in själva, följ manuset nedan och ersätt
+Filmen har just nu ingen speakerröst. En kan genereras med Piper (`npm run voice`). Repliker och tider finns i
+`scripts/make_voiceover.py`. Vill ni spela in själva, följ manuset nedan och spara som
 `public/audio/voiceover.wav`.
 
 Läs lugnt och tydligt, med ett leende i rösten. Tiderna följer filmens klipp (83 BPM).
