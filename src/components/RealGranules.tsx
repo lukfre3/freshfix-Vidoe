@@ -45,7 +45,8 @@ export const RealGranules: React.FC<{
   region?: {x0: number; x1: number};
   stopY?: number;
   shadow?: boolean;
-}> = ({kind, count = 40, speed = 2.2, seed = 1, start = 0, size = 120, region = {x0: 0, x1: 1}, stopY, shadow = true}) => {
+  spread?: number; // frames som starttiderna sprids över
+}> = ({kind, count = 40, speed = 2.2, seed = 1, start = 0, size = 120, region = {x0: 0, x1: 1}, stopY, shadow = true, spread = 160}) => {
   const frame = useCurrentFrame();
   const {width, height} = useVideoConfig();
   const ref = useRef<HTMLCanvasElement>(null);
@@ -72,7 +73,7 @@ export const RealGranules: React.FC<{
     for (let i = 0; i < count; i++) {
       const z = 0.3 + rand(seed * 1000 + i) * 1.3; // djup
       const x = (region.x0 + rand(seed * 2000 + i) * (region.x1 - region.x0)) * width;
-      const delay = rand(seed * 3000 + i) * 160;
+      const delay = rand(seed * 3000 + i) * spread;
       const tt = t - delay;
       if (tt < 0) continue;
       const y = -size * 1.2 + tt * speed * (0.45 + z * 0.75) * (1 + tt * 0.004);
@@ -104,7 +105,7 @@ export const RealGranules: React.FC<{
       ctx.drawImage(p.img, -w / 2, -h / 2, w, h);
       ctx.restore();
     }
-  }, [frame, imgs, width, height, count, speed, seed, start, size, region.x0, region.x1, stopY, kind, shadow]);
+  }, [frame, imgs, width, height, count, speed, seed, start, size, region.x0, region.x1, stopY, kind, shadow, spread]);
 
   return <canvas ref={ref} width={width} height={height} style={{position: 'absolute', inset: 0}} />;
 };

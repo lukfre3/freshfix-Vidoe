@@ -60,7 +60,7 @@ const Visual: React.FC<{i: number; dur: number}> = ({i, dur}) => {
       </AbsoluteFill>
     );
   }
-  if (i === 3) return <KenBurns src="img/forpackning.jpg" dur={dur} from={[1.15, 50, 52]} to={[1.3, 50, 56]} />;
+  if (i === 3) return <KenBurns src="img/forpackning.jpg" dur={dur} from={[1.05, 50, 50]} to={[1.18, 50, 54]} />;
   return (
     <AbsoluteFill style={{background: C.beige, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 40}}>
       {['img/sdg12.png', 'img/sdg13.png'].map((src, k) => {

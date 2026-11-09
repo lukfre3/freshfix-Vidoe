@@ -73,14 +73,14 @@ const Pase: React.FC<{dur: number}> = ({dur}) => {
       >
         <Img
           src={staticFile('img/filterpase.jpg')}
-          style={{width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 48%', transform: `scale(${z * 1.25})`, transformOrigin: '48% 45%'}}
+          style={{width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 50%', transform: `scale(${z})`, transformOrigin: '48% 50%'}}
         />
         <AbsoluteFill style={{background: 'linear-gradient(90deg, rgba(27,28,26,0) 60%, rgba(27,28,26,1) 100%)'}} />
       </div>
-      {/* material som "fylls" i påsen */}
-      <AbsoluteFill style={{opacity: 1 - ramp(frame, 40, 20)}}>
-        <RealGranules kind="kol" count={22} size={70} speed={3.4} seed={11} start={-6} region={{x0: 0.12, x1: 0.3}} stopY={430} />
-        <RealGranules kind="zeolit" count={16} size={55} speed={3.4} seed={13} start={0} region={{x0: 0.33, x1: 0.44}} stopY={430} />
+      {/* material som "fylls" i påsen – zeolit i vänster fack, kol i höger */}
+      <AbsoluteFill style={{opacity: 1 - ramp(frame, 46, 14)}}>
+        <RealGranules kind="kol" count={26} size={60} speed={7} seed={11} start={-14} spread={36} region={{x0: 0.258, x1: 0.37}} stopY={330} />
+        <RealGranules kind="zeolit" count={18} size={48} speed={7} seed={13} start={-10} spread={36} region={{x0: 0.162, x1: 0.224}} stopY={330} />
       </AbsoluteFill>
       <div style={{position: 'absolute', left: 1080, top: 380, width: 760}}>
         <FadeText start={4}>

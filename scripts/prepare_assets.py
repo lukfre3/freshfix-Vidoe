@@ -83,8 +83,8 @@ def logo():
 
 
 def copy_plain():
-    for name in ["filterpase", "forpackning"]:
-        im = Image.open(os.path.join(SRC, name + ".jpg")).convert("RGB")
+    for name, src in [("filterpase", "filterpase_ny.png"), ("forpackning", "forpackning_ny.png")]:
+        im = Image.open(os.path.join(SRC, src)).convert("RGB")
         im.save(os.path.join(IMG, name + ".jpg"), quality=92)
     for name in ["sdg12", "sdg13"]:
         Image.open(os.path.join(SRC, name + ".png")).save(os.path.join(IMG, name + ".png"))
