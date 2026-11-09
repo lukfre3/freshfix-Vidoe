@@ -382,8 +382,7 @@ add(sfx, t_pin, sub_boom(0.25, 0.6))
 
 # granuler som faller – små, torra klick (aktivt kol: mörkare, zeolit: ljusare)
 for name, f_lo, f_hi, t0, t1 in (("kol", 1200, 4000, SC["how"]["kol"], SC["how"]["zeolit"]),
-                                  ("zeolit", 2500, 7000, SC["how"]["zeolit"], SC["how"]["pase"]),
-                                  ("fyll", 1500, 6000, SC["how"]["pase"], SC["how"]["pase"] + 1.8)):
+                                  ("zeolit", 2500, 7000, SC["how"]["zeolit"], SC["how"]["pase"])):
     for _ in range(int((t1 - t0) * 22)):
         t = t0 + rng.random() * (t1 - t0)
         nn = int(0.012 * SR)

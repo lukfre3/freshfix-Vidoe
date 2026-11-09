@@ -77,11 +77,6 @@ const Pase: React.FC<{dur: number}> = ({dur}) => {
         />
         <AbsoluteFill style={{background: 'linear-gradient(90deg, rgba(27,28,26,0) 60%, rgba(27,28,26,1) 100%)'}} />
       </div>
-      {/* material som "fylls" i påsen – zeolit i vänster fack, kol i höger */}
-      <AbsoluteFill style={{opacity: 1 - ramp(frame, 46, 14)}}>
-        <RealGranules kind="kol" count={26} size={60} speed={7} seed={11} start={-14} spread={36} region={{x0: 0.258, x1: 0.37}} stopY={330} />
-        <RealGranules kind="zeolit" count={18} size={48} speed={7} seed={13} start={-10} spread={36} region={{x0: 0.162, x1: 0.224}} stopY={330} />
-      </AbsoluteFill>
       <div style={{position: 'absolute', left: 1080, top: 380, width: 760}}>
         <FadeText start={4}>
           <Label color={C.sand}>Filterpåsen</Label>
