@@ -1,7 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Img, OffthreadVideo, Sequence, interpolate, staticFile, useCurrentFrame} from 'remotion';
 import {C, FONT_SANS, FONT_SERIF, T, TEXT, f} from '../config';
-import {FallingGranules} from '../components/Particles';
+import {RealGranules} from '../components/RealGranules';
 import {EASE, FadeText, Grain, Label, RiseText, Vignette, ramp} from '../components/common';
 
 const S = T.scenes.how;
@@ -9,42 +9,46 @@ const S = T.scenes.how;
 const Material: React.FC<{kind: 'kol' | 'zeolit'; dur: number}> = ({kind, dur}) => {
   const frame = useCurrentFrame();
   const kol = kind === 'kol';
+  // svart kol syns bäst mot ljus bakgrund – ljus zeolit mot mörk
+  const dark = !kol;
   const tx = kol ? TEXT.how.kol : TEXT.how.zeolit;
-  const fg = kol ? C.white : C.charcoal;
+  const fg = dark ? C.white : C.charcoal;
   const zoom = interpolate(frame, [0, dur], [1, 1.06]);
   return (
     <AbsoluteFill
       style={{
-        background: kol
-          ? 'radial-gradient(ellipse at 60% 40%, #2b2d2f 0%, #111213 55%, #070707 100%)'
-          : `radial-gradient(ellipse at 60% 40%, #FBF8F2 0%, ${C.beige} 50%, ${C.beigeDeep} 100%)`,
+        background: dark
+          ? 'radial-gradient(ellipse at 65% 40%, #34373a 0%, #17181a 55%, #0a0a0a 100%)'
+          : `radial-gradient(ellipse at 65% 40%, #FBF9F5 0%, #EEEAE3 50%, ${C.beigeDeep} 100%)`,
         opacity: ramp(frame, 0, 8),
       }}
     >
-      <AbsoluteFill style={{transform: `scale(${zoom})`}}>
-        <FallingGranules kind={kind} count={kol ? 150 : 130} speed={kol ? 2.4 : 2.1} seed={kol ? 3 : 7} start={-110} />
-      </AbsoluteFill>
       {/* ljuskägla för studiokänsla */}
       <AbsoluteFill
         style={{
-          background: kol
-            ? 'radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 50%)'
-            : 'radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%)',
+          background: dark
+            ? 'radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 50%)'
+            : 'radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 50%)',
         }}
       />
+      <AbsoluteFill style={{transform: `scale(${zoom})`}}>
+        {/* riktiga bitar från era foton – skarpa i mitten, suddiga när de är nära/långt bort */}
+        <RealGranules kind={kind} count={34} size={kol ? 150 : 120} speed={2.3} seed={kol ? 3 : 7} start={-210} region={{x0: 0.38, x1: 1}} />
+        <RealGranules kind={kind} count={5} size={kol ? 330 : 270} speed={3.4} seed={kol ? 21 : 27} start={-120} region={{x0: 0, x1: 1}} />
+      </AbsoluteFill>
       <div style={{position: 'absolute', left: 140, top: 390}}>
         <FadeText start={2}>
-          <Label color={kol ? C.sand : C.green}>{kol ? 'Material 01' : 'Material 02'}</Label>
+          <Label color={dark ? C.sand : C.green}>{kol ? 'Material 01' : 'Material 02'}</Label>
         </FadeText>
         <div style={{height: 18}} />
-        <RiseText text={tx.title} start={4} size={128} weight={300} align="left" color={fg} tracking={0.08} stagger={4} />
+        <RiseText text={tx.title} start={4} size={128} weight={400} align="left" color={fg} tracking={0.08} stagger={4} />
         <div style={{height: 16}} />
-        <RiseText text={tx.line} start={14} size={42} weight={500} align="left" color={kol ? C.beige : C.charcoal} tracking={-0.01} stagger={2} />
+        <RiseText text={tx.line} start={14} size={42} weight={500} align="left" color={dark ? C.beige : C.charcoal} tracking={-0.01} stagger={2} />
         <FadeText start={24} style={{marginTop: 26}}>
-          <div style={{fontFamily: FONT_SERIF, fontStyle: 'italic', fontSize: 34, color: kol ? 'rgba(238,231,219,0.7)' : C.green}}>{tx.amount}</div>
+          <div style={{fontFamily: FONT_SERIF, fontStyle: 'italic', fontSize: 34, color: dark ? 'rgba(238,231,219,0.7)' : C.green}}>{tx.amount}</div>
         </FadeText>
       </div>
-      <Vignette strength={kol ? 0.6 : 0.18} />
+      <Vignette strength={dark ? 0.6 : 0.18} />
     </AbsoluteFill>
   );
 };
@@ -75,8 +79,8 @@ const Pase: React.FC<{dur: number}> = ({dur}) => {
       </div>
       {/* material som "fylls" i påsen */}
       <AbsoluteFill style={{opacity: 1 - ramp(frame, 40, 20)}}>
-        <FallingGranules kind="kol" count={60} speed={3.2} seed={11} start={-6} region={{x0: 0.12, x1: 0.3}} stopY={430} />
-        <FallingGranules kind="zeolit" count={40} speed={3.2} seed={13} start={0} region={{x0: 0.33, x1: 0.44}} stopY={430} />
+        <RealGranules kind="kol" count={22} size={70} speed={3.4} seed={11} start={-6} region={{x0: 0.12, x1: 0.3}} stopY={430} />
+        <RealGranules kind="zeolit" count={16} size={55} speed={3.4} seed={13} start={0} region={{x0: 0.33, x1: 0.44}} stopY={430} />
       </AbsoluteFill>
       <div style={{position: 'absolute', left: 1080, top: 380, width: 760}}>
         <FadeText start={4}>

@@ -114,6 +114,8 @@ def main():
     video("stangning_med_pase")
     video("stangning_tom")
     map_recolor()
+    granules("aktivt_kol", 40)
+    granules("zeolit", 30)
     print("Klart.")
 
 
@@ -150,8 +152,67 @@ def map_recolor():
     cv2.imwrite(os.path.join(IMG, "karta_uppland.jpg"), out, [cv2.IMWRITE_JPEG_QUALITY, 93])
 
 
+
+
+def granules(name, thresh):
+    """Frilägger varje kolbit/zeolitsten från fotot till egna PNG:er (public/img/granuler/)."""
+    out_dir = os.path.join(IMG, "granuler")
+    os.makedirs(out_dir, exist_ok=True)
+    bgr = cv2.imread(os.path.join(SRC, name + ".png"))
+    h, w = bgr.shape[:2]
+    lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
+    border = np.concatenate([lab[:20].reshape(-1, 3), lab[-20:].reshape(-1, 3), lab[:, :20].reshape(-1, 3), lab[:, -20:].reshape(-1, 3)])
+    bg = np.median(border, axis=0)
+    diff = np.sqrt(((lab - bg) ** 2).sum(axis=2))
+    # GrabCut med startmask: tydligt avvikande = objekt, nära bakgrund = bakgrund, skuggzon = osäker
+    gc = np.full((h, w), cv2.GC_PR_BGD, np.uint8)
+    gc[diff < 10] = cv2.GC_BGD
+    gc[diff > thresh] = cv2.GC_PR_FGD
+    sure = cv2.erode((diff > thresh * 1.8).astype(np.uint8), np.ones((15, 15), np.uint8))
+    gc[sure > 0] = cv2.GC_FGD
+    bgd = np.zeros((1, 65), np.float64)
+    fgd = np.zeros((1, 65), np.float64)
+    cv2.grabCut(bgr, gc, None, bgd, fgd, 6, cv2.GC_INIT_WITH_MASK)
+    m = np.where((gc == cv2.GC_FGD) | (gc == cv2.GC_PR_FGD), 255, 0).astype(np.uint8)
+    # ta bort skuggor: släta, färglösa pixlar som är något mörkare än bakgrunden
+    L = lab[..., 0]
+    chroma = np.sqrt((lab[..., 1] - bg[1]) ** 2 + (lab[..., 2] - bg[2]) ** 2)
+    mean = cv2.blur(L, (9, 9))
+    std = np.sqrt(np.maximum(cv2.blur(L * L, (9, 9)) - mean * mean, 0))
+    if name == "aktivt_kol":
+        shadow = L > 110
+    else:
+        # skuggor ligger i ytterkanten av varje sten: släta och nästan färglösa
+        ring = (m > 0) & (cv2.erode(m, np.ones((31, 31), np.uint8)) == 0)
+        shadow = ring & (std < 9) & (chroma < 6.5) & (L > bg[0] - 90)
+    m[shadow] = 0
+    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((7, 7), np.uint8))
+    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+    n, labels, stats, _ = cv2.connectedComponentsWithStats(m)
+    k = 0
+    for i in range(1, n):
+        x, y, ww, hh, area = stats[i]
+        if area < 3000:
+            continue
+        comp = (labels == i).astype(np.uint8) * 255
+        cnts, _ = cv2.findContours(comp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        comp = np.zeros_like(comp)
+        cv2.drawContours(comp, cnts, -1, 255, -1)
+        comp = cv2.erode(comp, np.ones((3, 3) if name == "aktivt_kol" else (9, 9), np.uint8))
+        comp = cv2.GaussianBlur(comp, (5, 5), 0)
+        pad = 6
+        x0, y0, x1, y1 = max(0, x - pad), max(0, y - pad), min(w, x + ww + pad), min(h, y + hh + pad)
+        rgba = cv2.cvtColor(bgr[y0:y1, x0:x1], cv2.COLOR_BGR2BGRA)
+        rgba[..., 3] = comp[y0:y1, x0:x1]
+        cv2.imwrite(os.path.join(out_dir, f"{name}_{k}.png"), rgba)
+        k += 1
+    return k
+
+
 if __name__ == "__main__":
     if os.environ.get("ONLY_MAP"):
         map_recolor()
+    elif os.environ.get("ONLY_GRANULES"):
+        print("kol:", granules("aktivt_kol", 40), "zeolit:", granules("zeolit", 30))
     else:
         main()
