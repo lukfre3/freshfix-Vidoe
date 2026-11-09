@@ -107,8 +107,7 @@ def video(name, slow=2.0):
 
 def main():
     # Produktfotona används hela (ingen frilagning) – endast exponeringen lyfts något.
-    for n in CUTOUTS:
-        lift(Image.open(os.path.join(SRC, n + ".jpg")).convert("RGB")).save(os.path.join(IMG, n + ".jpg"), quality=93)
+    new_product_photos()
     logo()
     copy_plain()
     video("stangning_med_pase")
@@ -209,9 +208,47 @@ def granules(name, thresh):
     return k
 
 
+# Nya produktfoton (bättre ljus). De placeras så att produkten hamnar på samma ställe och
+# i samma storlek som i de gamla fotona (2208×1472) – då fungerar alla kamerarörelser i filmen.
+TARGET = {  # (x0, y0, x1, y1) för produkten i målbilden 2208×1472
+    "freshfixer_angle": (690, 540, 1445, 1040),
+    "freshfixer_front": (700, 585, 1500, 925),
+    "freshfixer_upright": (630, 95, 1430, 1360),
+}
+
+
+def product_bbox(bgr):
+    lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
+    h, w = bgr.shape[:2]
+    border = np.concatenate([lab[:15].reshape(-1, 3), lab[-15:].reshape(-1, 3), lab[:, :15].reshape(-1, 3), lab[:, -15:].reshape(-1, 3)])
+    diff = np.sqrt(((lab - np.median(border, axis=0)) ** 2).sum(axis=2))
+    m = (diff > 55).astype(np.uint8)
+    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((25, 25), np.uint8))
+    n, lab_, st, _ = cv2.connectedComponentsWithStats(m)
+    k = 1 + np.argmax(st[1:, cv2.CC_STAT_AREA])
+    x, y, ww, hh = st[k, 0], st[k, 1], st[k, 2], st[k, 3]
+    return x, y, x + ww, y + hh
+
+
+def new_product_photos():
+    for name, (tx0, ty0, tx1, ty1) in TARGET.items():
+        bgr = cv2.imread(os.path.join(SRC, name + "_ny.jpg"))
+        x0, y0, x1, y1 = product_bbox(bgr)
+        s = min((tx1 - tx0) / (x1 - x0), (ty1 - ty0) / (y1 - y0))
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        tcx, tcy = (tx0 + tx1) / 2, (ty0 + ty1) / 2
+        M = np.float32([[s, 0, tcx - s * cx], [0, s, tcy - s * cy]])
+        out = cv2.warpAffine(bgr, M, (2208, 1472), flags=cv2.INTER_LANCZOS4, borderMode=cv2.BORDER_REPLICATE)
+        cv2.imwrite(os.path.join(IMG, name + ".jpg"), out, [cv2.IMWRITE_JPEG_QUALITY, 94])
+        print(name, "produkt", (x0, y0, x1, y1), "skala", round(s, 3))
+
+
 if __name__ == "__main__":
     if os.environ.get("ONLY_MAP"):
         map_recolor()
+    elif os.environ.get("ONLY_PRODUCTS"):
+        new_product_photos()
     elif os.environ.get("ONLY_GRANULES"):
         print("kol:", granules("aktivt_kol", 40), "zeolit:", granules("zeolit", 30))
     else:
