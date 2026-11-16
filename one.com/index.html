@@ -569,7 +569,7 @@ footer .pv ul{display:block;list-style:disc;padding-left:1.2rem;margin:0 0 .8rem
 <p><b>Vilka uppgifter.</b> När du beställer, gör en retur eller kontaktar oss lämnar du namn, e-post, adress och eventuellt telefonnummer. Vi ser också din Swish-betalning.</p>
 <p><b>Varför.</b> Vi använder uppgifterna bara för att hantera din beställning, retur eller fråga. Väljer du påminnelse om filterbyte använder vi din e-post eller ditt mobilnummer till det, tills du säger stopp. Vi säljer aldrig uppgifterna och använder dem inte för reklam.</p>
 <p><b>Vilka som får ta del av dem.</b> Bara vi i FreshFix UF, och PostNord när vi skickar ditt paket.</p>
-<p><b>Hur länge.</b> Så länge det behövs för beställningen och vår bokföring. Sidan använder inga cookies.</p>
+<p><b>Hur länge.</b> Så länge det behövs för beställningen och vår bokföring. Sidan använder inga cookies. När du skriver ditt postnummer hämtas orten från tjänsten Zippopotam.us.</p>
 <p><b>Dina rättigheter.</b> Mejla <a href="mailto:uf.freshfix@gmail.com">uf.freshfix@gmail.com</a> om du vill se, rätta eller radera dina uppgifter.</p>
 </div></details>
   <p class="legal">FreshFix UF – ett ungdomsföretag drivet av elever på Lundellska skolan, Uppsala.</p>
@@ -631,7 +631,7 @@ addEventListener("scroll",function(){if(!t){t=true;requestAnimationFrame(run)}},
     <label for="tel">Telefon <span class="opt">(valfritt)</span></label><input id="tel" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" aria-describedby="e-tel"><div class="err" id="e-tel" role="alert"></div>
     <div id="addr"><label for="ad">Gatuadress</label><input id="ad" autocomplete="street-address" maxlength="100" aria-describedby="e-ad"><div class="err" id="e-ad" role="alert"></div>
     <div class="two"><div><label for="pn">Postnummer</label><input id="pn" inputmode="numeric" autocomplete="postal-code" maxlength="6" placeholder="753 10" aria-describedby="e-pn"><div class="err" id="e-pn" role="alert"></div></div>
-    <div><label for="ort">Ort</label><input id="ort" autocomplete="address-level2" maxlength="60" aria-describedby="e-ort"><div class="err" id="e-ort" role="alert"></div></div></div></div>
+    <div><label for="ort">Ort <span class="opt">(fylls i automatiskt)</span></label><input id="ort" autocomplete="address-level2" maxlength="60" aria-describedby="e-ort"><div class="err" id="e-ort" role="alert"></div></div></div></div>
     <p class="note">Vi använder uppgifterna bara för att hantera din beställning. <a href="#integritet" class="intl" style="text-decoration:underline">Läs mer om integritet</a></p>
     <button class="btn p wide" type="submit">Fortsätt</button>
    </form>
@@ -737,6 +737,18 @@ var F=["nm","em","tel","ad","pn","ort"],T={},V={
 F.forEach(function(k){if(st.f[k])$(k).value=String(st.f[k]).slice(0,120)});
 wire(V,T,function(k){var i=$(k);if(k=="pn"){var x=i.value.replace(/\D/g,"");if(x.length==5)i.value=x.slice(0,3)+" "+x.slice(3)}else if(k!="em")i.value=one(i.value,120)});
 F.forEach(function(k){$(k).addEventListener("input",function(){st.f[k]=$(k).value;save()})});
+/* ort fylls i automatiskt från postnumret, men går att skriva över */
+(function(){var pn=$("pn"),ort=$("ort"),auto=false,last="",ctl=null;
+ function look(){var z=pn.value.replace(/\D/g,"");if(z.length!=5){last="";return}if(z===last)return;last=z;
+  if(ort.value.trim()&&!auto)return;
+  try{if(ctl)ctl.abort();ctl=window.AbortController?new AbortController():null}catch(e){ctl=null}
+  ort.placeholder="Hämtar ort …";
+  fetch("https://api.zippopotam.us/se/"+z,ctl?{signal:ctl.signal}:{}).then(function(r){return r.ok?r.json():null}).then(function(j){ort.placeholder="";
+   var n=j&&j.places&&j.places[0]&&j.places[0]["place name"];if(!n||z!==pn.value.replace(/\D/g,""))return;
+   if(!ort.value.trim()||auto){ort.value=one(n,60);auto=true;st.f.ort=ort.value;save();if(T.ort)vf(V,T,"ort",1)}}).catch(function(){ort.placeholder=""})}
+ pn.addEventListener("input",look);pn.addEventListener("blur",look);
+ ort.addEventListener("input",function(){auto=false});
+})();
 /* ---------- text i mejlet ---------- */
 var FR=+CONFIG.frakt||0;function sub(){return st.it.ff*PR.ff+st.it.fp*PR.fp}var FREE=+CONFIG.fri||500;function ship(){return !cnt()||sub()>=FREE?0:FR}function total(){return sub()+ship()}
 function lev(){return"PostNord ("+(ship()?kr(ship()):"fri frakt")+")"}
