@@ -51,34 +51,51 @@ BG = make_bg(2400, 1800, 760)      # big world for camera moves (world coords)
 
 
 # ---------- lip-sync (jaw drop) ----------
-MOUTHS = {'kav_portrait': (161, 230, 44), 'fr_neutral': (64, 105, 22), 'fr_angry': (64, 104, 22),
-          'fr_surpr': (65, 102, 22), 'kav_34': (89, 70, 9), 'kav_front': (100, 71, 9), 'fr_front': (85, 67, 9),
-          'fr_close': (110, 175, 34)}
-SPK = None; OPEN = 0.0
+MOUTHS = {'kav_portrait': (175, 226, 64), 'fr_neutral': (67, 101, 25), 'fr_angry': (67, 102, 25),
+          'fr_surpr': (67, 101, 25), 'kav_34': (89, 71, 11), 'kav_front': (100, 72, 12), 'fr_front': (85, 68, 11)}
+SPK = None; OPEN = 0.0; YAW = 0.0; TILT = 0.0
 def jaw(spr, mx, my, w, o):
-    if o <= 0.02: return spr
-    gap = max(1.0, o * 0.24 * w)
+    if o <= 0.03: return spr
+    gap = o * 0.15 * w
     out = spr.copy()
-    x0, x1 = int(mx - 1.2 * w), int(mx + 1.2 * w); y0, y1 = int(my), int(my + 1.8 * w)
+    x0, x1 = int(mx - .8 * w), int(mx + .8 * w); y0, y1 = int(my), int(my + 1.25 * w)
     reg = spr.crop((x0, y0, x1, y1))
-    # mouth cavity on soft layer
     lay = Image.new('RGBA', out.size, (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
-    d.ellipse([mx - .36 * w, my - .06 * w, mx + .36 * w, my + gap + .04 * w], fill=(55, 22, 22, 255))
-    if gap > 3: d.rectangle([mx - .2 * w, my - .02 * w, mx + .2 * w, my + gap * .22], fill=(175, 165, 150, 110))
-    lay = lay.filter(ImageFilter.GaussianBlur(max(.6, w * .03)))
-    a = np.array(lay.getchannel('A')).astype(float) * (np.array(out.getchannel('A')) / 255.)
-    lay.putalpha(Image.fromarray(a.astype('uint8'))); out.alpha_composite(lay)
-    # lower lip + chin slides down
+    d.ellipse([mx - .38 * w, my - .03 * w, mx + .38 * w, my + gap + .03 * w], fill=(40, 14, 14, 255))
+    if gap > 3:
+        d.ellipse([mx - .2 * w, my - .02 * w, mx + .2 * w, my + gap * .25], fill=(190, 180, 168, 110))
+    lay = lay.filter(ImageFilter.GaussianBlur(max(.5, w * .025)))
+    out.alpha_composite(lay)
+    # mask: narrow at the lip seam (mouth width), widening toward the chin
+    rw, rh = reg.size; cx = rw / 2
     m = Image.new('L', reg.size, 0)
-    ImageDraw.Draw(m).ellipse([w * .15, -reg.height * .4, reg.width - w * .15, reg.height * .95], fill=255)
-    m = m.filter(ImageFilter.GaussianBlur(max(1, w * .15)))
+    ImageDraw.Draw(m).polygon([(cx - .42 * w, 0), (cx + .42 * w, 0), (cx + .72 * w, rh * .55),
+                               (cx + .6 * w, rh), (cx - .6 * w, rh), (cx - .72 * w, rh * .55)], fill=255)
+    m = m.filter(ImageFilter.GaussianBlur(max(1, w * .06)))
     m = Image.fromarray(np.minimum(np.array(m), np.array(reg.getchannel('A'))))
     out.paste(reg, (x0, int(round(y0 + gap))), m)
     return out
-def MS(name):
-    if SPK and name.startswith(SPK) and name in MOUTHS:
-        mx, my, w = MOUTHS[name]; return jaw(S[name], mx, my, w, OPEN)
-    return S[name]
+
+def turn(spr, yaw, tilt=0.0):
+    """fake head/body turn: perspective squeeze on one side + small tilt"""
+    if abs(yaw) < 1e-3 and abs(tilt) < 1e-3: return spr
+    w, h = spr.size
+    dy = abs(yaw) * h * .05; dx = abs(yaw) * w * .06
+    if yaw > 0:   # turn toward viewer's right: left edge nearer (taller), right edge farther
+        quad = (dx, 0, dx, h, w, h + dy, w, -dy)
+    else:
+        quad = (0, -dy, 0, h + dy, w - dx, h, w - dx, 0)
+    out = spr.transform((w, h), Image.QUAD, quad, Image.BICUBIC)
+    if abs(tilt) > 1e-3: out = out.rotate(tilt, Image.BICUBIC, center=(w / 2, h * .9))
+    return out
+
+def MS(name, turn_amt=1.0, tilt_amt=1.0):
+    spr = S[name]
+    if SPK and name.startswith(SPK):
+        if name in MOUTHS:
+            mx, my, w = MOUTHS[name]; spr = jaw(spr, mx, my, w, OPEN)
+        spr = turn(spr, YAW * turn_amt, TILT * tilt_amt)
+    return spr
 def mouth_open(t):
     v = .55 * math.sin(2 * math.pi * 4.3 * t) + .35 * math.sin(2 * math.pi * 6.9 * t + 1.3) + .2 * math.sin(2 * math.pi * 1.7 * t)
     return max(0.0, min(1.0, v + .15))
@@ -89,7 +106,9 @@ def ease(t): return t * t * (3 - 2 * t)
 def place(canvas, spr, cx, foot_y, height, blur=0, flip=False, dark=0):
     s = spr.transpose(Image.FLIP_LEFT_RIGHT) if flip else spr
     h = max(1, int(height)); w = max(1, int(s.width * h / s.height))
+    up = h / s.height
     s = s.resize((w, h), Image.LANCZOS)
+    if up > 1.2 and not blur: s = s.filter(ImageFilter.UnsharpMask(2, 70, 2))
     if blur: s = s.filter(ImageFilter.GaussianBlur(blur))
     if dark:
         a = s.getchannel('A'); s = Image.blend(s.convert('RGB'), Image.new('RGB', s.size, (0, 0, 0)), dark).convert('RGBA'); s.putalpha(a)
@@ -102,7 +121,9 @@ def place(canvas, spr, cx, foot_y, height, blur=0, flip=False, dark=0):
 def place_top(canvas, spr, cx, top_y, height, blur=0, flip=False):
     s = spr.transpose(Image.FLIP_LEFT_RIGHT) if flip else spr
     h = int(height); w = int(s.width * h / s.height)
+    up = h / s.height
     s = s.resize((w, h), Image.LANCZOS)
+    if up > 1.2 and not blur: s = s.filter(ImageFilter.UnsharpMask(3, 80, 2))
     if blur: s = s.filter(ImageFilter.GaussianBlur(blur))
     canvas.alpha_composite(s, (int(cx - w / 2), int(top_y)))
 
@@ -164,13 +185,13 @@ def kav_close(z0=1.0, z1=1.1, yoff=0, ang=False):
 
 def ots_kav(t, d):
     # over-the-shoulder: kavaj 3/4 right, striped & green background, fridge blurred foreground left
-    c = bg_view(1000, 760, 1.6, blur=1.5)
+    c = bg_view(1000, 760, 1.6, blur=2)
     pop = min(1, max(0, (t - 3.6) / .5))           # "nej vi" -> crew steps in
-    place(c, S['st_front'], 230, 640, 230, blur=1.2)
+    place(c, S['st_front'], 230, 640, 230, blur=0)
     if pop > 0:
-        place(c, S['gr_front'], 400 + (1 - pop) * -300, 600, 300, blur=1.2)
+        place(c, S['gr_front'], 400 + (1 - pop) * -300, 600, 300, blur=0)
     place_top(c, MS('kav_34'), 680, 60 + bob(t, 3, .8), 1250)
-    place_top(c, S['fr_side'], -40, 40, 1500, blur=6, flip=True)
+    place_top(c, S['fr_side'], -40, 40, 1500, blur=3.5, flip=True)
     return c
 
 def two_shot(t, d):
@@ -182,32 +203,22 @@ def two_shot(t, d):
 
 def product(t, d):
     p = ease(min(1, t / d))
-    c = Image.new('RGBA', (W, H), (60, 42, 28, 255))
-    dd = ImageDraw.Draw(c)
-    for i in range(0, H, 36):   # wood planks
-        dd.rectangle([0, i, W, i + 34], fill=(70 + (i * 7) % 18, 48 + (i * 5) % 12, 30, 255))
-        dd.line([0, i + 35, W, i + 35], fill=(35, 24, 15), width=2)
-    dd.rectangle([0, 440, W, H], fill=(45, 30, 20, 255))
-    z = 1 + .08 * p; off = -30 * p
-    for x, n, h in [(175, 'box_closed', 190), (480, 'box_open', 300), (790, 'box_34', 300)]:
-        place(c, S[n], W / 2 + (x - W / 2) * z + off, 455, h * z)
-    tag = ImageFont.truetype('/usr/share/fonts/opentype/inter/Inter-Bold.otf', 26)
-    for x in (175, 480, 790):
-        bx = W / 2 + (x - W / 2) * z + off
-        dd.rounded_rectangle([bx - 62, 466, bx + 62, 506], 6, fill=(235, 228, 205), outline=(30, 20, 10), width=2)
-        dd.text((bx - dd.textlength('349 kr', font=tag) / 2, 471), '349 kr', font=tag, fill=(25, 20, 15))
+    z = 1.0 + .18 * p
+    c = bg_view(1200, 640, 2.6 * z, blur=2.5)
+    hgt = 430 * z
+    place(c, S['box_open'], W / 2, 600 + 40 * (z - 1), hgt)
     return c
 
 def kav_med(t, d):
     c = bg_view(1050, 760, 1.6, blur=1.5)
-    place_top(c, S['fr_side'], -60, 60, 1400, blur=6, flip=True)
+    place_top(c, S['fr_side'], -60, 60, 1400, blur=3.5, flip=True)
     place_top(c, MS('kav_34'), 640, 50 + bob(t, 3, .8), 1250)
     return c
 
 def eyes(t, d):
     p = t / d
     spr = MS('kav_portrait'); s = spr.width / spr.height
-    big = spr.resize((int(2600 * s), 2600), Image.LANCZOS)
+    big = spr.resize((int(2600 * s), 2600), Image.LANCZOS).filter(ImageFilter.UnsharpMask(4, 90, 2))
     c = bg_view(900, 650, 2.4, blur=3)
     c.alpha_composite(big, (int(W / 2 - big.width / 2 - 20), int(-640 - 40 * p)))
     return c
@@ -216,27 +227,57 @@ def fr_ots(spr):
     def f(t, d):
         c = bg_view(1300, 700, 2.0, blur=2.5)
         place_top(c, MS(spr), 360, 90 + bob(t, 2, .6), 640)
-        place_top(c, S['kav_back'], 820, 120, 1500, blur=7)
+        place_top(c, S['kav_back'], 820, 120, 1500, blur=4)
         return c
     return f
 
+ARM_POLY = [(160, 98), (180, 96), (191, 170), (191, 282), (154, 282), (153, 230), (154, 150)]
+ARM_PIVOT = (170, 108)
+def point_arm(spr, ang):
+    """rotate the right arm outward (ang degrees) and add an index finger"""
+    if ang <= .5: return spr
+    pad = 160
+    hard = Image.new('L', spr.size, 0); ImageDraw.Draw(hard).polygon(ARM_POLY, fill=255)
+    hard_d = hard.filter(ImageFilter.MaxFilter(5))
+    sa = np.array(spr.getchannel('A'))
+    am = np.minimum(np.array(hard.filter(ImageFilter.GaussianBlur(.8))), sa)
+    big = lambda im: (lambda c: (c.alpha_composite(im, (0, 0)), c)[1])(Image.new('RGBA', (spr.width + pad, spr.height + 40), (0, 0, 0, 0)))
+    arm = spr.copy(); arm.putalpha(Image.fromarray(am))
+    d = ImageDraw.Draw(arm)
+    d.rounded_rectangle([166, 268, 176, 294], 5, fill=(214, 166, 134, 255), outline=(150, 100, 80, 255))
+    body = spr.copy(); a = np.array(body); a[..., 3] = np.where(np.array(hard_d) > 0, 0, a[..., 3]).astype('uint8')
+    body = Image.fromarray(a)
+    canv = big(body)
+    canv.alpha_composite(big(arm).rotate(ang, Image.BICUBIC, center=ARM_PIVOT))
+    return canv
+
 def finale(t, d):
+    # like the original's last shot: talker centre, gesturing, crew around him
     p = ease(min(1, t / 2.5))
-    c = bg_view(1200, 790, 1.15 - .15 * p)
-    z = 1.15 - .15 * p
+    z = 1.12 - .12 * p
+    c = bg_view(1200, 790, z)
     gx = lambda x: W / 2 + (x - W / 2) * z
-    place(c, MS('fr_front'), gx(150), 600 + 40 * z, 420 * z)
+    place(c, S['fr_front'], gx(150), 600 + 40 * z, 430 * z)
     place(c, S['box_34'], gx(195), 430 + 60 * z, 85 * z)
-    place(c, MS('kav_front'), gx(400), 600 + 40 * z, (450 + bob(t, 3)) * z)
-    place(c, S['st_front'], gx(610), 600 + 40 * z, 250 * z)
-    place(c, S['gr_front'], gx(800), 600 + 40 * z, 360 * z)
+    place(c, S['gr_front'], gx(840), 600 + 40 * z, 380 * z)
+    ang = 30 * ease(min(1, max(0, (t - .3) / .5))) + (3 * math.sin(t * 9) if t > .8 else 0)
+    k = point_arm(MS('kav_front', .6, 0), ang)
+    sc = (465 + bob(t, 3)) * z / S['kav_front'].height
+    kw = int(k.width * sc); kh = int(k.height * sc)
+    kk = k.resize((kw, kh), Image.LANCZOS).filter(ImageFilter.UnsharpMask(2, 70, 2))
+    fx, fy = gx(450), 600 + 40 * z
+    sh = Image.new('RGBA', (int(S['kav_front'].width * sc * .9), 18), (0, 0, 0, 0))
+    ImageDraw.Draw(sh).ellipse([0, 0, sh.width - 1, 17], fill=(40, 25, 10, 110))
+    c.alpha_composite(sh, (int(fx - sh.width / 2), int(fy - 9)))
+    c.alpha_composite(kk, (int(fx - S['kav_front'].width * sc / 2), int(fy - kh)))
+    place(c, S['st_front'], gx(640), 640 + 40 * z, 250 * z)
     if t > d - 2.6:   # end card bar
         a = min(1, (t - (d - 2.6)) / .4)
-        bar = Image.new('RGBA', (W, 110), (15, 15, 15, int(215 * a)))
-        c.alpha_composite(bar, (0, 18))
+        bar = Image.new('RGBA', (W, 88), (15, 15, 15, int(215 * a)))
+        c.alpha_composite(bar, (0, 0))
         f1 = ImageFont.truetype('/usr/share/fonts/opentype/inter/Inter-ExtraBold.otf', 58)
         dd = ImageDraw.Draw(c); txt = 'FreshFix  ·  349 kr'
-        dd.text(((W - dd.textlength(txt, font=f1)) / 2, 40), txt, font=f1, fill=(255, 255, 255, int(255 * a)))
+        dd.text(((W - dd.textlength(txt, font=f1)) / 2, 12), txt, font=f1, fill=(255, 255, 255, int(255 * a)))
     return c
 
 SHOTS = [
@@ -265,8 +306,7 @@ SPEAKERS = ['kav', 'fr', 'kav', 'kav', 'fr', 'kav', 'kav', 'kav', None, None, 'k
 
 def grade(c):
     # PS2-ish: slight downscale/upscale + contrast + vignette
-    rgb = c.convert('RGB').resize((W // 2, H // 2), Image.BILINEAR).resize((W, H), Image.NEAREST).filter(ImageFilter.GaussianBlur(.6))
-    return rgb
+    return c.convert('RGB')
 
 VIG = None
 def vignette(im):
@@ -284,7 +324,7 @@ if PREVIEW:
     for i, (d, fn, subs) in enumerate(SHOTS):
         random.seed(i); t = d * .6
         txt = [s for a, b, s in subs if a <= t < b]
-        SPK = SPEAKERS[i] if txt else None; OPEN = 1.0
+        SPK = SPEAKERS[i] if txt else None; OPEN = 1.0; YAW = .8; TILT = 2
         c = fn(t, d)
         im = vignette(grade(c)).convert('RGBA'); subtitle(im, txt[-1] if txt else '')
         sheet.paste(im.convert('RGB').resize((W // 3, H // 3)), ((i % 4) * W // 3, (i // 4) * H // 3))
@@ -299,6 +339,8 @@ for i, (d, fn, subs) in enumerate(SHOTS):
         txt = [s for a, b, s in subs if a <= t < b]
         SPK = SPEAKERS[i] if txt else None
         OPEN = mouth_open(t + i * 3.1)
+        YAW = .9 * math.sin(2 * math.pi * .45 * t + i) + .3 * math.sin(2 * math.pi * 1.1 * t)
+        TILT = 2.2 * math.sin(2 * math.pi * .3 * t + i * .7)
         c = fn(t, d)
         im = vignette(grade(c)).convert('RGBA')
         subtitle(im, txt[-1] if txt else '')
