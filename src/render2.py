@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 
 exec(open('rig.py').read())
+exec(open('extend.py').read())
 
 W, H, FPS = 960, 720, 30
 PREVIEW = len(sys.argv) > 2
@@ -25,7 +26,15 @@ NAMES = ['k2_front', 'k2_side', 'k2_back', 'k2_34', 'k2_walk', 'k2_portrait',
          'kav_front', 'kav_34', 'kav_back', 'kav_portrait', 'kav_side', 'kav_walk',
          'fr_front', 'fr_close', 'fr_angry', 'fr_surpr', 'fr_side', 'fr_neutral', 'fr_backhead',
          'st_front', 'gr_front', 'box_open', 'box_closed', 'box_34']
-S = {n: sun_grade(Image.open(f'sp/h_{n}.png').convert('RGBA'), .6 if n.startswith('box') else 1) for n in NAMES}
+RAW = {n: Image.open(f'sp/h_{n}.png').convert('RGBA') for n in NAMES}
+S, EXTP, EXT_BY_SIZE = {}, {}, {}
+for n, im in RAW.items():
+    if n in BODY:                       # grow shoulders / torso past the crop edges
+        ext, P = extend_body(im, params=BODY[n], color=COLOR.get(n))
+        EXTP[n] = P; EXT_BY_SIZE[ext.size] = im.height
+        im = ext
+    S[n] = sun_grade(im, .6 if n.startswith('box') else 1)
+S_ORIG = {n: sun_grade(RAW[n]) for n in ('k2_portrait',)}
 
 # ---------------- lip sync / turning ----------------
 MOUTHS = {'k2_portrait': (178, 297, 64), 'm_front': (130, 224, 56), 'm_34': (140, 203, 58),
@@ -33,6 +42,7 @@ MOUTHS = {'k2_portrait': (178, 297, 64), 'm_front': (130, 224, 56), 'm_34': (140
           'k2_front': (103, 65, 20), 'k2_side': (88, 66, 12), 'kav_portrait': (175, 226, 64), 'fr_neutral': (67, 101, 25), 'fr_angry': (67, 102, 25),
           'fr_surpr': (67, 101, 25), 'fr_close': (108, 151, 31), 'kav_34': (89, 71, 11),
           'kav_front': (100, 72, 12), 'fr_front': (85, 68, 11), 'kav_side': (78, 72, 8)}
+MOUTHS = {k: ((x + EXTP.get(k, 0)), y, w) for k, (x, y, w) in MOUTHS.items()}
 SPK = None; OPEN = 0.0; YAW = 0.0; TILT = 0.0
 
 def jaw(spr, mx, my, w, o):
@@ -170,8 +180,10 @@ def place_padded(canvas, padded, base, cx, foot_y, height, blur=0, flip=False, s
 
 def place_top(canvas, spr, cx, top_y, height, blur=0, flip=False):
     s = spr.transpose(Image.FLIP_LEFT_RIGHT) if flip else spr
-    h = int(height); w = int(s.width * h / s.height)
-    up = h / s.height
+    oh = EXT_BY_SIZE.get(s.size, s.height)
+    sc = height / oh
+    h = int(s.height * sc); w = int(s.width * sc)
+    up = sc
     s = sharpen_up(s.resize((w, h), Image.LANCZOS), up, blur)
     canvas.alpha_composite(s, (int(cx - w / 2), int(top_y)))
 
@@ -260,7 +272,8 @@ def low_angle(t, d, glare_fade=(0, .9), zoom=(1.0, 1.06), xoff=0):
     c = bg_view(1200, 950, 1.0, blur=1, src=SKY)
     spr = MS('k2_portrait', .8, 1.0)
     w0, h0 = spr.size
-    hgt = int(800 * z); wd = int(w0 * hgt / h0)
+    oh = EXT_BY_SIZE.get(spr.size, h0)
+    hgt = int(800 * z * h0 / oh); wd = int(w0 * hgt / h0)
     s = spr.resize((wd, hgt), Image.LANCZOS)
     sq = .10
     s = s.transform(s.size, Image.QUAD, (wd * sq, 0, 0, hgt, wd, hgt, wd * (1 - sq), 0), Image.BICUBIC)   # chin nearer camera
@@ -345,7 +358,7 @@ def s11_ots(t, d):
 
 def s12_eyes(t, d):
     p = t / d
-    spr = S['k2_portrait']; f = 5.2 * (1 + .12 * p)
+    spr = S_ORIG['k2_portrait']; f = 5.2 * (1 + .12 * p)
     big = spr.resize((int(spr.width * f), int(spr.height * f)), Image.LANCZOS).filter(ImageFilter.UnsharpMask(3, 70, 2))
     c = bg_view(900, 650, 2.4, blur=3)
     c.alpha_composite(big, (int(W / 2 - 176 * f), int(H * .46 - 200 * f)))
