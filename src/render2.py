@@ -26,7 +26,7 @@ NAMES = ['k2_front', 'k2_side', 'k2_back', 'k2_34', 'k2_walk', 'k2_portrait',
          'm_front', 'm_side', 'm_34', 'm_aside', 'm_gesture', 'm_cross', 'm_down', 'm_talk', 'm_away',
          'kav_front', 'kav_34', 'kav_back', 'kav_portrait', 'kav_side', 'kav_walk',
          'fr_front', 'fr_close', 'fr_angry', 'fr_surpr', 'fr_side', 'fr_neutral', 'fr_backhead',
-         'st_front', 'gr_front', 'box_open', 'box_closed', 'box_34']
+         'st_front', 'gr_front', 'box_open', 'box_closed', 'box_34', 'ff_box', 'ff_container', 'ff_filter']
 RAW = {n: Image.open(f'sp/h_{n}.png').convert('RGBA') for n in NAMES}
 S, EXTP, EXT_BY_SIZE = {}, {}, {}
 for n, im in RAW.items():
@@ -36,6 +36,7 @@ for n, im in RAW.items():
         im = ext
     S[n] = sun_grade(im, .6 if n.startswith('box') else 1)
 S_ORIG = {n: sun_grade(RAW[n]) for n in ('k2_portrait',)}
+S['box_open'] = S['ff_box']; S['box_34'] = S['ff_box']
 
 # ---------------- lip sync / turning ----------------
 MOUTHS = {'k2_portrait': (178, 297, 64), 'm_front': (130, 224, 56), 'm_34': (140, 203, 58),
@@ -259,6 +260,11 @@ def s1_wide_toss(t, d):
     # talker centre holding the open FreshFix box, crew behind, tosses it off to the left
     dx, dy = drift(t, 1, 2)
     c = bg_view(1200 + dx, 800 + dy, 1.0)
+    # pallets of FreshFix boxes ready to ship, standing behind the crew
+    for x0, cols, rows in [(590, 7, 4), (40, 5, 3)]:
+        for r in range(rows):
+            for col in range(cols):
+                place(c, S['box_closed'], x0 + col * 46 + (r % 2) * 5, 540 - r * 31, 36, shadow_on=(r == 0))
     place(c, S['st_front'], 230, 560, 150, blur=.6)
     place(c, S['gr_front'], 820, 585, 260, blur=.4)
     toss = ramp(t, 1.45, 1.75)
@@ -361,7 +367,7 @@ def s7_profile(t, d):
     dx, dy = drift(t, 7, 1.5)
     c = bg_view(1200 + dx, 800 + dy, 1.0)
     place(c, S['fr_side'], 260, 650, 470 + bob(t, 2, .5), flip=True)
-    place(c, S['box_34'], 320, 470, 105, shadow_on=False)
+    place(c, S['box_34'], 322, 480, 92, shadow_on=False)
     g = ramp(t, .3, .7)
     a1 = 25 * g + 5 * math.sin(t * 3); a2 = 85 * g + 15 * math.sin(t * 4.2)
     k = posed('k2_side', {'k2_side_R': (a1, a2, False)})
@@ -371,7 +377,9 @@ def s7_profile(t, d):
 def s9_product(t, d):
     p = ease(min(1, t / d)); z = 1.0 + .12 * p
     c = bg_view(1200, 640, 2.6 * z, blur=2.5)
-    place(c, S['box_open'], W / 2, 600 + 40 * (z - 1), 430 * z)
+    place(c, S['ff_box'], W / 2 + 150 * z, 560 + 30 * (z - 1), 380 * z)
+    place(c, S['ff_container'], W / 2 - 150 * z, 640 + 40 * (z - 1), 230 * z)
+    place(c, S['ff_filter'], W / 2 - 330 * z, 650 + 40 * (z - 1), 170 * z)
     return glare(c, W * .85, H * .05, 300, .3).convert('RGBA')
 
 def s11_ots(t, d):
@@ -417,13 +425,36 @@ def s15_finale(t, d):
         k = posed('k2_front', {'k2_front_L': (-26 * pa + jab, 10 * pa, pa > .3)})
         place_padded(c, k, S['k2_front'], 470, 650 + 20 * step, kh + bob(t, 2, .8))
     place(c, S['st_front'], 660, 700, 270)
-    if t > d - 1.6 and not NOSUB:
+    if False:
         a = ramp(t, d - 1.6, d - 1.2)
         bar = Image.new('RGBA', (W, 80), (12, 12, 12, int(200 * a)))
         c.alpha_composite(bar, (0, 0))
         f1 = ImageFont.truetype('/usr/share/fonts/opentype/inter/Inter-ExtraBold.otf', 52)
         dd = ImageDraw.Draw(c); txt = 'FreshFix  ·  349 kr'
         dd.text(((W - dd.textlength(txt, font=f1)) / 2, 10), txt, font=f1, fill=(255, 255, 255, int(255 * a)))
+    return c
+
+def s16_ending(t, d):
+    p = ease(min(1, t / d)); z = 1.0 + .10 * p
+    c = bg_view(1200, 720, 2.2 * z, blur=4)
+    dark = Image.new('RGBA', (W, H), (0, 0, 0, int(110 * ramp(t, 0, .8)))); c.alpha_composite(dark)
+    place(c, S['ff_container'], W / 2 - 110 * z, 690, 250 * z)
+    place(c, S['ff_filter'], W / 2 + 160 * z, 695, 185 * z)
+    c = glare(c, W * .8, H * .12, 380, .55 - .25 * p).convert('RGBA')
+    if not NOSUB:
+        dd = ImageDraw.Draw(c)
+        def title(txt, size, y, a0, col=(255, 255, 255)):
+            a = ramp(t, a0, a0 + .45)
+            if a <= 0: return
+            f = ImageFont.truetype('/usr/share/fonts/opentype/inter/Inter-ExtraBold.otf', size)
+            tw = dd.textlength(txt, font=f)
+            lay = Image.new('RGBA', (W, H), (0, 0, 0, 0)); dl = ImageDraw.Draw(lay)
+            dl.text(((W - tw) / 2 + 3, y + 4), txt, font=f, fill=(0, 0, 0, int(200 * a)))
+            c.alpha_composite(lay.filter(ImageFilter.GaussianBlur(4)))
+            dd.text(((W - tw) / 2, y - 12 * (1 - a)), txt, font=f, fill=col + (int(255 * a),))
+        title('FRESHFIX', 120, 25, .2)
+        title('DÖDA MATSVINNET.', 54, 160, .9, (235, 210, 120))
+        title('Beställ din FreshFixer idag.', 36, 232, 1.6)
     return c
 
 # (duration, fn, speaker, [(start, end, text)])  - cut points follow the reference
@@ -446,6 +477,7 @@ SHOTS = [
     (2.00, s13_fr_ots, 'fr', [(.95, 2.0, 'Du är FreshFix')]),
     (1.65, lambda t, d: low_angle(t, d, (0, .5), (1.04, 1.08), -20), 'kav', [(.4, 1.65, 'Stämmer bra.')]),
     (4.80, s15_finale, 'kav', [(.3, 4.8, 'Klicka på länken här nere och beställ din doftneutraliserare idag.')]),
+    (4.20, s16_ending, None, []),
 ]
 
 VIG = None
