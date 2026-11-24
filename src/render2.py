@@ -1,5 +1,6 @@
 """FreshFix reklamfilm v3 - shot-for-shot timing, camera moves and gestures modelled on the reference."""
-import math, random, subprocess, sys
+import math, os, random, subprocess, sys
+NOSUB = bool(os.environ.get('NOSUB'))
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 
@@ -78,7 +79,34 @@ def turn(spr, yaw, tilt=0.0):
 PREFIX = {'kav': ('k2_', 'm_', 'kav_'), 'fr': ('fr_',)}
 def speaking(name): return bool(SPK) and name.startswith(PREFIX[SPK])
 
+# ---------- AI face animation (LivePortrait output, processed per frame) ----------
+ANIM_DIR = 'lpj'
+_ANIM_CACHE = {}
+SHOT_ANIM = {}; SHOT_T = 0.0
+def anim_frame(key, src, t):
+    """frame of the LivePortrait clip `key` (driven version of sprite `src`) at local time t, as a finished sprite"""
+    path = f'{ANIM_DIR}/{key}--{key}_drv.mp4'
+    if not os.path.exists(path): return None
+    if key not in _ANIM_CACHE:
+        if len(_ANIM_CACHE) > 3: _ANIM_CACHE.pop(next(iter(_ANIM_CACHE)))
+        raw = RAW[src]; w, h = raw.size
+        r = subprocess.run(['ffmpeg', '-v', 'error', '-i', path, '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], capture_output=True)
+        pw, ph = map(int, subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height',
+                                          '-of', 'csv=p=0', path], capture_output=True, text=True).stdout.strip().split(','))
+        arr = np.frombuffer(r.stdout, np.uint8).reshape(-1, ph, pw, 3)
+        frames = []
+        for fr in arr:
+            im = Image.fromarray(fr).resize((w, h), Image.LANCZOS).convert('RGBA'); im.putalpha(raw.getchannel('A'))
+            if src in BODY: im, _ = extend_body(im, params=BODY[src], color=COLOR.get(src))
+            frames.append(sun_grade(im))
+        _ANIM_CACHE[key] = frames
+    fr = _ANIM_CACHE[key]
+    return fr[min(len(fr) - 1, max(0, int(t * FPS)))]
+
 def MS(name, turn_amt=1.0, tilt_amt=1.0):
+    if name in SHOT_ANIM:
+        a = anim_frame(SHOT_ANIM[name], name, SHOT_T)
+        if a is not None: return a
     spr = S[name]
     if speaking(name):
         if name in MOUTHS:
@@ -278,7 +306,7 @@ def low_angle(t, d, glare_fade=(0, .9), zoom=(1.0, 1.06), xoff=0):
     sq = .10
     s = s.transform(s.size, Image.QUAD, (wd * sq, 0, 0, hgt, wd, hgt, wd * (1 - sq), 0), Image.BICUBIC)   # chin nearer camera
     s = s.filter(ImageFilter.UnsharpMask(3, 80, 2))
-    c.alpha_composite(s, (int(W / 2 - wd / 2 + 40 + xoff + bob(t, 4, .35)), int(-25 - 40 * (z - 1))))
+    c.alpha_composite(s, (int(W / 2 - wd / 2 + 40 + xoff ), int(-25 - 40 * (z - 1))))
     g = 1 - ramp(t, glare_fade[0], glare_fade[1])
     c = glare(c, W * .3, H * .18, 420, .25 + .75 * g)
     return c.convert('RGBA')
@@ -287,7 +315,7 @@ def kav_close(z0, z1, yoff=0):
     def f(t, d):
         p = t / d; z = z0 + (z1 - z0) * p
         c = bg_view(900, 650, 2.4, blur=3)
-        place_top(c, MS('m_34'), W / 2 + 20, (20 + yoff) * z - 60 * (z - 1) + bob(t, 3, .9), 800 * z)
+        place_top(c, MS('m_34'), W / 2 + 20, (20 + yoff) * z - 60 * (z - 1), 800 * z)
         return glare(c, W * .2, H * .1, 380, .25).convert('RGBA')
     return f
 
@@ -296,7 +324,7 @@ def fr_close(spr, push=.08, shake=0):
         p = t / d; z = 1 + push * p
         c = bg_view(1300, 700, 2.2, blur=3)
         place_top(c, MS(spr), W / 2 + (random.uniform(-shake, shake) if shake else 0),
-                  70 - 30 * p + bob(t, 3, .7), 700 * z)
+                  70 - 30 * p, 700 * z)
         return c
     return f
 
@@ -304,8 +332,8 @@ def med_pose(c, seq, t, cx, top, hgt, xf=.12):
     """seq: list of (start, sprite, flip); cross-fades between photo poses"""
     cur = max(i for i, (st, *_r) in enumerate(seq) if st <= t)
     def draw(idx, alpha):
-        st, nm, fl = seq[idx]
-        spr = MS(nm, .6, .8)
+        st, nm, fl, key = seq[idx]
+        spr = (anim_frame(key, nm, t - st) if key else None) or MS(nm, .6, .8)
         lay = Image.new('RGBA', c.size, (0, 0, 0, 0))
         place_top(lay, spr, cx, top, hgt, flip=fl)
         if alpha < 1:
@@ -322,9 +350,9 @@ def s6_ots(t, d):
     pop = ramp(t, 4.0, 4.5)
     if pop > 0: place(c, S['gr_front'], 120 + 150 * pop + dx, 640, 330, blur=1.4)
     lean = ramp(t, 4.9, 5.4) * (1 - ramp(t, 5.9, 6.4))
-    seq = [(0, 'm_talk', True), (3.2, 'm_gesture', True), (4.0, 'm_aside', False), (4.9, 'm_down', True),
-           (6.0, 'm_talk', True), (8.6, 'm_gesture', True)]
-    med_pose(c, seq, t, 650 + dx * 1.3 - 40 * lean, 60 + bob(t, 3, .8) + 50 * lean + dy, 720 * (1 + .1 * lean))
+    seq = [(0, 'm_talk', True, 'k_s6a'), (3.2, 'm_gesture', True, 'k_s6b'), (4.0, 'm_aside', False, 'k_s6c'),
+           (4.9, 'm_down', True, 'k_s6d'), (6.0, 'm_talk', True, 'k_s6e'), (8.6, 'm_gesture', True, 'k_s6f')]
+    med_pose(c, seq, t, 650 + dx * 1.3 - 40 * lean, 60 + 50 * lean + dy, 720 * (1 + .1 * lean))
     place_top(c, S['fr_backhead'], -10 + dx * 2, 150 + dy, 1150, blur=6)
     return c
 
@@ -351,8 +379,8 @@ def s11_ots(t, d):
     dx, dy = drift(t, 11, 3)
     c = bg_view(1050 + dx, 770 + dy, 1.6, blur=2.2)
     place(c, S['st_front'], 260, 650, 250, blur=1.4)
-    seq = [(0, 'm_away', False), (.35, 'm_talk', True), (1.9, 'm_cross', True)]
-    med_pose(c, seq, t, 650 + dx * 1.3, 60 + bob(t, 3, .8) + dy, 720)
+    seq = [(0, 'm_away', False, None), (.35, 'm_talk', True, 'k_s11b'), (1.9, 'm_cross', True, 'k_s11c')]
+    med_pose(c, seq, t, 650 + dx * 1.3, 60 + dy, 720)
     place_top(c, S['fr_backhead'], -10 + dx * 2, 150 + dy, 1150, blur=6)
     return c
 
@@ -367,7 +395,7 @@ def s12_eyes(t, d):
 def s13_fr_ots(t, d):
     dx, dy = drift(t, 13, 2)
     c = bg_view(1300 + dx, 700, 2.0, blur=2.5)
-    place_top(c, MS('fr_close', .7, .8), 360 + dx, 110 + bob(t, 2, .6), 640)
+    place_top(c, MS('fr_close', .7, .8), 360 + dx, 110, 640)
     place(c, S['box_open'], 370 + dx, H + 175, 290, shadow_on=False)
     place_top(c, S['k2_back'], 830 + dx * 2, 90, 1650, blur=4)
     return c
@@ -389,7 +417,7 @@ def s15_finale(t, d):
         k = posed('k2_front', {'k2_front_L': (-26 * pa + jab, 10 * pa, pa > .3)})
         place_padded(c, k, S['k2_front'], 470, 650 + 20 * step, kh + bob(t, 2, .8))
     place(c, S['st_front'], 660, 700, 270)
-    if t > d - 1.6:
+    if t > d - 1.6 and not NOSUB:
         a = ramp(t, d - 1.6, d - 1.2)
         bar = Image.new('RGBA', (W, 80), (12, 12, 12, int(200 * a)))
         c.alpha_composite(bar, (0, 0))
@@ -431,17 +459,21 @@ def finish(c):
     arr = (arr - 128) * 1.06 + 128 + 4          # a touch of punch like the reference
     return Image.fromarray(np.clip(arr * VIG, 0, 255).astype('uint8')).convert('RGBA')
 
+ANIM_MAP = {1: {'fr_close': 'f_s2'}, 2: {'k2_portrait': 'k_s3'}, 3: {'m_34': 'k_s4'}, 4: {'fr_angry': 'f_s5'},
+            7: {'k2_portrait': 'k_s8'}, 9: {'fr_surpr': 'f_s10'}, 12: {'fr_close': 'f_s13'}, 13: {'k2_portrait': 'k_s14'}}
+
 def frame(i, t):
     global SPK, OPEN, YAW, TILT
     d, fn, spk, subs = SHOTS[i]
     txt = [s for a, b, s in subs if a <= t < b]
     SPK = spk if txt else None
     OPEN = mouth_open(t + i * 3.1)
-    YAW = .9 * math.sin(2 * math.pi * .45 * t + i) + .3 * math.sin(2 * math.pi * 1.1 * t)
-    TILT = 2.2 * math.sin(2 * math.pi * .3 * t + i * .7)
+    YAW = 0.0; TILT = 0.0
+    global SHOT_ANIM, SHOT_T
+    SHOT_ANIM = ANIM_MAP.get(i, {}); SHOT_T = t
     random.seed(i * 1000 + int(t * FPS))
     c = finish(fn(t, d))
-    return subtitle(c, txt[-1] if txt else '').convert('RGB')
+    return (c if NOSUB else subtitle(c, txt[-1] if txt else '')).convert('RGB')
 
 total = sum(s[0] for s in SHOTS)
 print('total', round(total, 2))
